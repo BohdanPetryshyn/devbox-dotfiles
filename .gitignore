@@ -3,6 +3,14 @@
 # `status.showUntrackedFiles=no`; these patterns block an accidental `dot add -A`
 # from capturing secrets or churn.
 
+
+# The bare repo itself (would otherwise be committed by `dot add .`)
+/.dotfiles/
+
+# Untracked Ubuntu skel files we don't care to track
+/.bash_logout
+/.profile
+
 # Project workspaces (their own git repos)
 /workspace/
 
