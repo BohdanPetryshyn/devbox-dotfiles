@@ -1,0 +1,50 @@
+# Safety net for the dotfiles bare repo.
+# Paths are anchored to $HOME (leading slash). Default invisibility comes from
+# `status.showUntrackedFiles=no`; these patterns block an accidental `dot add -A`
+# from capturing secrets or churn.
+
+# Project workspaces (their own git repos)
+/workspace/
+
+# Caches and tool installs (rebuilt by bootstrap.sh)
+/.cache/
+/.npm/
+/.dotnet/
+/.vscode-server/
+/.copilot/
+/.asdf/
+/.local/
+
+# Secrets / credentials
+/.ssh/
+/.claude/.credentials.json
+/.claude.json
+/.config/gh/
+
+# Per-machine identity (user.name, user.email) — included by .gitconfig
+/.gitconfig.local
+
+# Logs and shell history
+/.bash_history
+/.viminfo
+/.wget-hsts
+/.sudo_as_admin_successful
+
+# Claude session/state — keep settings + memory + agents/commands/skills only
+/.claude/sessions/
+/.claude/projects/
+/.claude/cache/
+/.claude/downloads/
+/.claude/backups/
+/.claude/file-history/
+/.claude/shell-snapshots/
+/.claude/session-env/
+/.claude/ide/
+/.claude/history.jsonl
+/.claude/.last-cleanup
+/.claude/mcp-needs-auth-cache.json
+/.claude/plugins/marketplaces/
+/.claude/plugins/known_marketplaces.json
+
+# Created on first bootstrap when checkout collides with skel files
+/.dotfiles-backup/
