@@ -16,12 +16,23 @@ dot() { git --git-dir="$DOTFILES_DIR" --work-tree="$HOME" "$@"; }
 
 ### 1. apt prerequisites ------------------------------------------------------
 sudo apt-get update
-sudo apt-get install -y build-essential curl git vim tmux mosh
+sudo apt-get install -y \
+  build-essential curl git \
+  vim tmux mosh \
+  unattended-upgrades
 
 # mosh runs over UDP 60000-61000. Open the range if ufw is active.
 if systemctl is-active --quiet ufw; then
   sudo ufw allow 60000:61000/udp >/dev/null
 fi
+
+# Enable automatic security updates. The package's default 50unattended-upgrades
+# config installs from the -security pocket only, no auto-reboot — fine for a
+# dev box. This file just turns the daily timers on.
+sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null <<'EOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+EOF
 
 ### 2. Clone the dotfiles bare repo and check out into $HOME -----------------
 if [ ! -d "$DOTFILES_DIR" ]; then
