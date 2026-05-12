@@ -40,6 +40,14 @@ if [ ! -d "$DOTFILES_DIR" ]; then
 fi
 dot config --local status.showUntrackedFiles no
 
+# `git clone --bare` defaults to a mirror refspec — no `refs/remotes/origin/*`
+# tracking refs, so `dot push`/`dot status -sb` need --set-upstream gymnastics.
+# Switch to the normal refspec and wire `main` to track `origin/main`. All
+# idempotent — safe to re-run.
+dot config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+dot config branch.main.remote origin
+dot config branch.main.merge refs/heads/main
+
 # First checkout may collide with default skel files (.bashrc, .profile, ...).
 # Back up conflicts, then retry. `|| true` keeps `set -e -o pipefail` from
 # killing the script on the expected first-checkout failure.
@@ -50,6 +58,11 @@ if ! dot checkout 2>/dev/null; then
   done
   dot checkout
 fi
+
+# On reruns, pull in changes pushed from other machines. --autostash tucks
+# away any local working-tree edits so the rebase doesn't abort on them.
+dot fetch origin
+dot pull --rebase --autostash origin main
 
 ### 3. Homebrew (linuxbrew) ---------------------------------------------------
 if ! command -v brew >/dev/null 2>&1; then
