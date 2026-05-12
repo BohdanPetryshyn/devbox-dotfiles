@@ -41,11 +41,12 @@ fi
 dot config --local status.showUntrackedFiles no
 
 # First checkout may collide with default skel files (.bashrc, .profile, ...).
-# Back up conflicts, then retry.
+# Back up conflicts, then retry. `|| true` keeps `set -e -o pipefail` from
+# killing the script on the expected first-checkout failure.
 if ! dot checkout 2>/dev/null; then
   mkdir -p "$BACKUP_DIR"
-  dot checkout 2>&1 | grep -E "^\s+\." | awk '{print $1}' | while read -r f; do
-    mv "$HOME/$f" "$BACKUP_DIR/$f"
+  { dot checkout 2>&1 || true; } | awk '/^\s+\./ {print $1}' | while read -r f; do
+    [ -n "$f" ] && mv "$HOME/$f" "$BACKUP_DIR/$f"
   done
   dot checkout
 fi
