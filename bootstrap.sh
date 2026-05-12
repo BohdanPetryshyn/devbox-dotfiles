@@ -73,7 +73,17 @@ if ! command -v claude >/dev/null 2>&1; then
   curl -fsSL https://claude.ai/install.sh | bash
 fi
 
-### 7. Manual follow-ups -----------------------------------------------------
+### 7. ble.sh (fish-style autosuggestions + syntax highlighting in bash) -----
+# .bashrc sources ~/.local/share/blesh/ble.sh; this just installs the files.
+if [ ! -f "$HOME/.local/share/blesh/ble.sh" ]; then
+  tmpdir=$(mktemp -d)
+  git clone --recursive --depth 1 --shallow-submodules \
+    https://github.com/akinomyoga/ble.sh.git "$tmpdir/ble.sh"
+  make -C "$tmpdir/ble.sh" install PREFIX="$HOME/.local"
+  rm -rf "$tmpdir"
+fi
+
+### 8. Manual follow-ups -----------------------------------------------------
 cat <<'EOF'
 
 bootstrap complete. Manual follow-ups:
@@ -88,4 +98,6 @@ bootstrap complete. Manual follow-ups:
       [user]
               name  = Your Name
               email = you@example.com
+  - exec bash -l                        # reload shell so ble.sh + new PATH
+                                        # take effect without reopening terminal
 EOF

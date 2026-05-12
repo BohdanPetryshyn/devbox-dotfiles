@@ -8,6 +8,10 @@ case $- in
       *) return;;
 esac
 
+# ble.sh: load early in non-attached mode so the rest of .bashrc runs untouched,
+# then ble-attach at the end. See https://github.com/akinomyoga/ble.sh.
+[[ -f ~/.local/share/blesh/ble.sh ]] && source -- ~/.local/share/blesh/ble.sh --attach=none
+
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
@@ -122,3 +126,6 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # Dotfiles bare repo: use `dot` like git for files in $HOME tracked by ~/.dotfiles
 alias dot='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
+
+# Attach ble.sh now that the rest of .bashrc has run.
+[[ ! ${BLE_VERSION-} ]] || ble-attach
