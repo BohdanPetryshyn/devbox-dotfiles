@@ -1,0 +1,4 @@
+# Up/Down: search history for entries starting with the text before the cursor
+# (like macOS Terminal). Falls back to plain history step on an empty line.
+ble-bind -f 'up'   history-search-backward
+ble-bind -f 'down' history-search-forward
