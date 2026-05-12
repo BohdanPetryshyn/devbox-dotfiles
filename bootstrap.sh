@@ -14,7 +14,27 @@ BACKUP_DIR="$HOME/.dotfiles-backup"
 
 dot() { git --git-dir="$DOTFILES_DIR" --work-tree="$HOME" "$@"; }
 
-### 1. apt prerequisites ------------------------------------------------------
+### 1. Swap -------------------------------------------------------------------
+# Many cloud images ship with no swap. Without it, memory pressure can trip
+# direct-reclaim thrash instead of OOM-killing, leaving the box unresponsive.
+SWAPFILE=/swapfile
+SWAPSIZE_MB=4096
+
+if ! swapon --show=NAME --noheadings | grep -qx "$SWAPFILE"; then
+  if [ ! -e "$SWAPFILE" ]; then
+    sudo fallocate -l "${SWAPSIZE_MB}M" "$SWAPFILE" \
+      || sudo dd if=/dev/zero of="$SWAPFILE" bs=1M count="$SWAPSIZE_MB" status=progress
+    sudo chmod 600 "$SWAPFILE"
+    sudo mkswap "$SWAPFILE"
+  fi
+  sudo swapon "$SWAPFILE"
+fi
+
+if ! grep -qE "^\s*${SWAPFILE}\s+" /etc/fstab; then
+  echo "$SWAPFILE none swap sw 0 0" | sudo tee -a /etc/fstab >/dev/null
+fi
+
+### 2. apt prerequisites ------------------------------------------------------
 sudo apt-get update
 sudo apt-get install -y \
   build-essential curl git \
@@ -34,7 +54,7 @@ APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
 EOF
 
-### 2. Clone the dotfiles bare repo and check out into $HOME -----------------
+### 3. Clone the dotfiles bare repo and check out into $HOME -----------------
 if [ ! -d "$DOTFILES_DIR" ]; then
   git clone --bare "$DOTFILES_REPO" "$DOTFILES_DIR"
 fi
@@ -64,29 +84,29 @@ fi
 dot fetch origin
 dot pull --rebase --autostash origin main
 
-### 3. Homebrew (linuxbrew) ---------------------------------------------------
+### 4. Homebrew (linuxbrew) ---------------------------------------------------
 if ! command -v brew >/dev/null 2>&1; then
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"
 
-### 4. brew packages ----------------------------------------------------------
+### 5. brew packages ----------------------------------------------------------
 # gcc is required by asdf-built tools; gh for GitHub auth/CLI; asdf for runtimes
 brew install gcc asdf gh
 
-### 5. asdf-managed runtimes --------------------------------------------------
+### 6. asdf-managed runtimes --------------------------------------------------
 asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git || true
 # Versions come from the checked-out ~/.tool-versions
 asdf install
 asdf reshim
 
-### 6. Claude Code ------------------------------------------------------------
+### 7. Claude Code ------------------------------------------------------------
 if ! command -v claude >/dev/null 2>&1; then
   curl -fsSL https://claude.ai/install.sh | bash
 fi
 
-### 7. ble.sh (fish-style autosuggestions + syntax highlighting in bash) -----
+### 8. ble.sh (fish-style autosuggestions + syntax highlighting in bash) -----
 # .bashrc sources ~/.local/share/blesh/ble.sh; this just installs the files.
 if [ ! -f "$HOME/.local/share/blesh/ble.sh" ]; then
   tmpdir=$(mktemp -d)
@@ -96,7 +116,7 @@ if [ ! -f "$HOME/.local/share/blesh/ble.sh" ]; then
   rm -rf "$tmpdir"
 fi
 
-### 8. Manual follow-ups -----------------------------------------------------
+### 9. Manual follow-ups -----------------------------------------------------
 cat <<'EOF'
 
 bootstrap complete. Manual follow-ups:
