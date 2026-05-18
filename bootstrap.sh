@@ -116,7 +116,17 @@ if [ ! -f "$HOME/.local/share/blesh/ble.sh" ]; then
   rm -rf "$tmpdir"
 fi
 
-### 9. Manual follow-ups -----------------------------------------------------
+### 9. Tailscale -------------------------------------------------------------
+# Mesh VPN so this box is reachable from my other devices (Mac, phone) over a
+# stable 100.x.y.z IP — needed for e.g. WebRTC dev where a browser on the Mac
+# must hit a server running here. The official installer sets up its own apt
+# repo + systemd service. Joining the tailnet is a browser-auth step, deferred
+# to the manual follow-ups below.
+if ! command -v tailscale >/dev/null 2>&1; then
+  curl -fsSL https://tailscale.com/install.sh | sh
+fi
+
+### 10. Manual follow-ups ----------------------------------------------------
 cat <<'EOF'
 
 bootstrap complete. Manual follow-ups:
@@ -124,6 +134,7 @@ bootstrap complete. Manual follow-ups:
                                         # credential helper with this machine's
                                         # gh path (no-op on linuxbrew machines)
   - claude                              # sign in to Claude Code on first run
+  - sudo tailscale up                   # browser-auth this box into the tailnet
   - copy ~/.ssh/ from a trusted backup  # not committed by design
   - if the VPS provider has a panel-level firewall (Contabo, Hetzner,
     AWS SG, etc.), also open UDP 60000-61000 there for mosh
