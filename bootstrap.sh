@@ -37,7 +37,7 @@ fi
 ### 2. apt prerequisites ------------------------------------------------------
 sudo apt-get update
 sudo apt-get install -y \
-  build-essential curl git \
+  build-essential curl git unzip \
   vim tmux mosh \
   unattended-upgrades
 
