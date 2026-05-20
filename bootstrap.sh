@@ -97,6 +97,7 @@ brew install gcc asdf gh
 
 ### 6. asdf-managed runtimes --------------------------------------------------
 asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git || true
+asdf plugin add bun https://github.com/cometkim/asdf-bun.git || true
 # Versions come from the checked-out ~/.tool-versions
 asdf install
 asdf reshim
