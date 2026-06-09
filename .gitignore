@@ -28,6 +28,9 @@
 /.claude.json
 /.config/gh/
 
+# Per-machine secrets & env (API tokens, etc.) — sourced by .bashrc
+/.bashrc.local
+
 # Per-machine identity (user.name, user.email) — included by .gitconfig
 /.gitconfig.local
 

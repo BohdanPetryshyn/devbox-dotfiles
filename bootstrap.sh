@@ -102,6 +102,14 @@ asdf plugin add bun https://github.com/cometkim/asdf-bun.git || true
 asdf install
 asdf reshim
 
+# Global Node CLIs. wrangler = Cloudflare Workers/Pages CLI; reads creds from
+# CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID in ~/.bashrc.local (see follow-ups).
+# reshim so asdf exposes the freshly installed bin.
+if ! command -v wrangler >/dev/null 2>&1; then
+  npm install -g wrangler
+  asdf reshim nodejs
+fi
+
 ### 7. Claude Code ------------------------------------------------------------
 if ! command -v claude >/dev/null 2>&1; then
   curl -fsSL https://claude.ai/install.sh | bash
@@ -143,6 +151,9 @@ bootstrap complete. Manual follow-ups:
       [user]
               name  = Your Name
               email = you@example.com
+  - Create ~/.bashrc.local with per-machine secrets (untracked), e.g. wrangler:
+      export CLOUDFLARE_ACCOUNT_ID=...
+      export CLOUDFLARE_API_TOKEN=...
   - exec bash -l                        # reload shell so ble.sh + new PATH
                                         # take effect without reopening terminal
 EOF

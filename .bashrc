@@ -127,5 +127,8 @@ export PATH="$HOME/.local/bin:$PATH"
 # Dotfiles bare repo: use `dot` like git for files in $HOME tracked by ~/.dotfiles
 alias dot='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 
+# Per-machine secrets & env overrides — untracked, sibling of ~/.gitconfig.local.
+[[ -f ~/.bashrc.local ]] && source ~/.bashrc.local
+
 # Attach ble.sh now that the rest of .bashrc has run.
 [[ ! ${BLE_VERSION-} ]] || ble-attach
