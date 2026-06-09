@@ -102,6 +102,11 @@ asdf plugin add bun https://github.com/cometkim/asdf-bun.git || true
 asdf install
 asdf reshim
 
+# asdf installs runtimes as shims under ~/.asdf/shims; .bashrc adds that to PATH
+# for interactive shells, but this non-interactive script needs it too so the
+# `npm`/`node` shims below resolve.
+export PATH="$HOME/.asdf/shims:$PATH"
+
 # Global Node CLIs. wrangler = Cloudflare Workers/Pages CLI; reads creds from
 # CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID in ~/.bashrc.local (see follow-ups).
 # reshim so asdf exposes the freshly installed bin.
