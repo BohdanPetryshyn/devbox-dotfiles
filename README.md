@@ -112,9 +112,11 @@ claude --dangerously-skip-permissions --worktree v1 --remote-control box-1-v1
 
 ### Screenshots
 
-`spaste` (in [`mac/`](mac/spaste.zsh)) ships your Mac clipboard image to
-the box and copies the uploaded file's path back, ready to paste into
-Claude Code. Install it on your Mac:
+Pasting an image into Claude Code doesn't work over SSH — your clipboard
+lives on your Mac, not the box. `spaste` (in [`mac/`](mac/spaste.zsh))
+bridges the gap: it ships your Mac clipboard image to the box and copies
+the uploaded file's path back, ready to paste into Claude Code. Install
+it on your Mac:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/BohdanPetryshyn/devbox-dotfiles/main/mac/spaste.zsh \
