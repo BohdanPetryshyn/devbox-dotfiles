@@ -145,4 +145,7 @@ bootstrap complete. Manual follow-ups, in order:
   3. claude                            # sign in
   4. ask claude to add ~/.gitconfig.local with your git identity
   5. sudo tailscale up                 # browser-auth into the tailnet
+
+Using this setup (tmux + Claude Code workflow, screenshots, ports):
+  ~/README.md  ·  github.com/BohdanPetryshyn/devbox-dotfiles
 EOF
