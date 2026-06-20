@@ -38,13 +38,8 @@ fi
 sudo apt-get update
 sudo apt-get install -y \
   build-essential curl git unzip \
-  vim tmux mosh \
+  vim tmux \
   unattended-upgrades
-
-# mosh runs over UDP 60000-61000. Open the range if ufw is active.
-if systemctl is-active --quiet ufw; then
-  sudo ufw allow 60000:61000/udp >/dev/null
-fi
 
 # Enable automatic security updates. The package's default 50unattended-upgrades
 # config installs from the -security pocket only, no auto-reboot — fine for a
@@ -143,22 +138,11 @@ fi
 ### 10. Manual follow-ups ----------------------------------------------------
 cat <<'EOF'
 
-bootstrap complete. Manual follow-ups:
-  - gh auth login                       # GitHub auth; also rewrites .gitconfig
-                                        # credential helper with this machine's
-                                        # gh path (no-op on linuxbrew machines)
-  - claude                              # sign in to Claude Code on first run
-  - sudo tailscale up                   # browser-auth this box into the tailnet
-  - copy ~/.ssh/ from a trusted backup  # not committed by design
-  - if the VPS provider has a panel-level firewall (Contabo, Hetzner,
-    AWS SG, etc.), also open UDP 60000-61000 there for mosh
-  - Create ~/.gitconfig.local with your git identity:
-      [user]
-              name  = Your Name
-              email = you@example.com
-  - Create ~/.bashrc.local with per-machine secrets (untracked), e.g. wrangler:
-      export CLOUDFLARE_ACCOUNT_ID=...
-      export CLOUDFLARE_API_TOKEN=...
-  - exec bash -l                        # reload shell so ble.sh + new PATH
-                                        # take effect without reopening terminal
+bootstrap complete. Manual follow-ups, in order:
+
+  1. exec bash -l                      # reload: brew/asdf/claude on PATH, ble.sh
+  2. gh auth login
+  3. claude                            # sign in
+  4. ask claude to add ~/.gitconfig.local with your git identity
+  5. sudo tailscale up                 # browser-auth into the tailnet
 EOF
