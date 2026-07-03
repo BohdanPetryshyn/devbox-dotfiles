@@ -40,8 +40,13 @@
 /.wget-hsts
 /.sudo_as_admin_successful
 
-# Claude Code state — settings, sessions, plugins, credentials all live here
-/.claude/
+# Claude Code state — sessions, plugins, credentials all live here.
+# Everything is ignored except the explicitly whitelisted config files
+# (`/.claude/*` instead of `/.claude/` so the negations below can apply).
+/.claude/*
+!/.claude/settings.json
+!/.claude/statusline-command.sh
+!/.claude/statusline-command.py
 
 # Created on first bootstrap when checkout collides with skel files
 /.dotfiles-backup/
