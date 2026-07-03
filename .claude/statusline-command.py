@@ -3,9 +3,11 @@ r"""Claude Code statusLine.
 
 Left: current working directory (with $HOME abbreviated to ~), in muted
 gray to match Claude Code's own dimmed footer styling.
-Right: model name and context-window usage ("ctx NN% (Xk/Yk)"),
-right-aligned to the terminal width. Gray throughout, except the
-percentage itself which is colored by how full the context window is.
+Right: model name with effort level ("Fable 5 ·xhigh"), context-window
+usage ("ctx NN% (Xk/Yk)") and account rate-limit usage ("5h 32% · wk 61%",
+the same data as /usage), right-aligned to the terminal width. Gray
+throughout, except percentages which are colored by how close they are
+to their limit.
 
 Reads the statusLine JSON from stdin and does all parsing/formatting here
 in a single python3 process (stdlib only, no jq/pip dependency).
@@ -124,6 +126,14 @@ def last_assistant_usage(transcript_path, tail_bytes=200_000):
     return None
 
 
+def pct_color(pct):
+    if pct < 60:
+        return GRAY
+    if pct < 85:
+        return YELLOW
+    return RED
+
+
 def ctx_text(data):
     """Return 'ctx NN% (Xk/Yk)' with the percentage colored, or None if
     context info is unavailable."""
@@ -147,24 +157,45 @@ def ctx_text(data):
         used_pct = (tokens_used / window_size) * 100
 
     pct = round(used_pct)
-    if pct < 60:
-        pct_color = GRAY
-    elif pct < 85:
-        pct_color = YELLOW
-    else:
-        pct_color = RED
+    return f"ctx {pct_color(pct)}{pct}%{GRAY} ({fmt_tokens(tokens_used)}/{fmt_tokens(window_size)})"
 
-    return f"ctx {pct_color}{pct}%{GRAY} ({fmt_tokens(tokens_used)}/{fmt_tokens(window_size)})"
+
+def rate_limits_text(data):
+    """Return '5h 32% · wk 61%' with percentages colored, or None.
+    rate_limits only appears for subscription accounts after the first
+    API response of the session, and each window may be independently
+    absent — show whatever is there."""
+    rl = data.get("rate_limits")
+    if not isinstance(rl, dict):
+        return None
+    parts = []
+    for key, label in (("five_hour", "5h"), ("seven_day", "wk")):
+        window = rl.get(key)
+        if not isinstance(window, dict):
+            continue
+        used_pct = window.get("used_percentage")
+        if used_pct is None:
+            continue
+        pct = round(used_pct)
+        parts.append(f"{label} {pct_color(pct)}{pct}%{GRAY}")
+    if not parts:
+        return None
+    return " · ".join(parts)
 
 
 def right_side(data):
     parts = []
     model_name = (data.get("model") or {}).get("display_name")
     if model_name:
-        parts.append(model_name)
+        # Absent when the model doesn't support the effort parameter.
+        effort = (data.get("effort") or {}).get("level")
+        parts.append(f"{model_name} ·{effort}" if effort else model_name)
     ctx = ctx_text(data)
     if ctx:
         parts.append(ctx)
+    limits = rate_limits_text(data)
+    if limits:
+        parts.append(limits)
     if not parts:
         return ""
     return f"{GRAY}{' | '.join(parts)}{RESET}"
