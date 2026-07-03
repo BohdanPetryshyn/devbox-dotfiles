@@ -3,7 +3,7 @@ r"""Claude Code statusLine.
 
 Left: current working directory (with $HOME abbreviated to ~), in muted
 gray to match Claude Code's own dimmed footer styling.
-Right: model name with effort level ("Fable 5 ·xhigh"), context-window
+Right: model name with effort level ("Fable 5 · xhigh"), context-window
 usage ("ctx NN% (Xk/Yk)") and account rate-limit usage ("5h 32% · wk 61%",
 the same data as /usage), right-aligned to the terminal width. Gray
 throughout, except percentages which are colored by how close they are
@@ -189,7 +189,7 @@ def right_side(data):
     if model_name:
         # Absent when the model doesn't support the effort parameter.
         effort = (data.get("effort") or {}).get("level")
-        parts.append(f"{model_name} ·{effort}" if effort else model_name)
+        parts.append(f"{model_name} · {effort}" if effort else model_name)
     ctx = ctx_text(data)
     if ctx:
         parts.append(ctx)
