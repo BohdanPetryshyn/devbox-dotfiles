@@ -44,6 +44,7 @@
 # Everything is ignored except the explicitly whitelisted config files
 # (`/.claude/*` instead of `/.claude/` so the negations below can apply).
 /.claude/*
+!/.claude/CLAUDE.md
 !/.claude/settings.json
 !/.claude/statusline-command.sh
 !/.claude/statusline-command.py
