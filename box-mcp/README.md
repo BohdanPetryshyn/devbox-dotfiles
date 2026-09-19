@@ -70,7 +70,9 @@ approval.
 - stdout+stderr interleaved, then `[exit code N · 1.2s]`. Output over 30k
   characters is cut from the middle; the full text goes to
   `~/.local/state/box-mcp/out/`.
-- Timeout 120 s by default, 600 s max; the whole process group is killed.
+- Timeout 120 s by default, 240 s max; the whole process group is killed. (The
+  cap is below a measured ~295 s cut-off on Claude's side of the connection —
+  longer work goes in `run_in_background`.)
 - `run_in_background` starts a transient systemd user unit
   (`box-mcp-job-<id>`) that outlives server restarts and logs to a file; manage
   it with ordinary `systemctl --user` / `tail`.

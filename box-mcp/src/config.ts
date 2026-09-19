@@ -38,7 +38,10 @@ export const MAX_PENDING = 20;
 
 // --- bash tool ------------------------------------------------------------------
 export const BASH_DEFAULT_TIMEOUT_MS = 120_000;
-export const BASH_MAX_TIMEOUT_MS = 600_000;
+// Measured: Anthropic's connector path drops a tool call at ~295 s no matter what
+// the server does, and some clients stop waiting sooner. Stay clearly under it —
+// anything longer belongs in run_in_background.
+export const BASH_MAX_TIMEOUT_MS = 240_000;
 export const BASH_MAX_OUTPUT_CHARS = 30_000;
 /** Hard cap on what a single foreground command may write before it is killed. */
 export const BASH_MAX_OUTPUT_BYTES = 50 * 1024 * 1024;

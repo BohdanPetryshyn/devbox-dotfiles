@@ -38,7 +38,7 @@ How it behaves:
 - PATH matches the user's interactive shell (Homebrew, asdf runtimes such as node/bun, ~/.local/bin) and ~/.bashrc.local is loaded.
 - stdout and stderr are returned interleaved, followed by the exit code. Output beyond ${BASH_MAX_OUTPUT_CHARS.toLocaleString('en-US')} characters is cut from the middle and the full text is saved to a file whose path is given — read parts of it with head/tail/grep/sed.
 - \`timeout_ms\` defaults to ${BASH_DEFAULT_TIMEOUT_MS / 1000}s (max ${BASH_MAX_TIMEOUT_MS / 1000}s). On timeout the whole process group is killed.
-- For anything long-running (builds, installs, dev servers, watchers) set \`run_in_background: true\`: the command starts as a transient systemd user unit and the call returns at once with the unit name and a log file. Follow up with ordinary commands: \`tail -n 50 <log>\`, \`systemctl --user is-active <unit>\`, \`systemctl --user stop <unit>\`.
+- For anything that may take more than a couple of minutes (builds, installs, dev servers, watchers) set \`run_in_background: true\`: the command starts as a transient systemd user unit and the call returns at once with the unit name and a log file. Follow up with ordinary commands: \`tail -n 50 <log>\`, \`systemctl --user is-active <unit>\`, \`systemctl --user stop <unit>\`.
 - Interactive programs (editors, pagers, prompts, \`sudo\` asking for a password) cannot work. Use non-interactive flags (-y, --no-pager, …).
 - To edit files use heredocs, \`sed -i\`, \`patch\`, or a short python/node script.
 
