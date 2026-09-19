@@ -224,7 +224,7 @@ test('the bash tool works over MCP with the token', async () => {
   assert.ok(audit.grant);
 });
 
-test('the machine CLAUDE.md rides along in the tool description, live', async () => {
+test('the tool description points at the machine CLAUDE.md (pointer, not contents)', async () => {
   const describe = async () => {
     const transport = new StreamableHTTPClientTransport(new URL(`${BASE}/mcp`), { requestInit: { headers: { authorization: `Bearer ${access}` } } });
     const client = new Client({ name: 'e2e', version: '0' });
@@ -236,17 +236,18 @@ test('the machine CLAUDE.md rides along in the tool description, live', async ()
     }
   };
 
-  assert.doesNotMatch(await describe(), /machine-instructions/, 'no file → no section');
+  assert.doesNotMatch(await describe(), /standing instructions/, 'no file → nothing to point at');
 
-  fs.writeFileSync(env.BOX_MCP_INSTRUCTIONS_FILE, '# House rules\nAlways use the canary-7431 deploy script.\n');
-  const withFile = await describe();
-  assert.match(withFile, /<machine-instructions>\n# House rules\nAlways use the canary-7431 deploy script\.\n<\/machine-instructions>/);
-  assert.match(withFile, /^Run a bash command/, 'behaviour notes still come first');
+  fs.writeFileSync(env.BOX_MCP_INSTRUCTIONS_FILE, 'Always use the canary-7431 deploy script.\n');
+  const d = await describe();
+  assert.match(d, /^Run a bash command/);
+  assert.ok(d.includes(`Before your first command in a conversation, read the owner's standing instructions for this machine with \`cat ${env.BOX_MCP_INSTRUCTIONS_FILE}\``));
+  assert.match(d, /Once per conversation is enough/);
+  assert.doesNotMatch(d, /canary-7431/, 'contents stay on the box until Claude reads them');
 
-  fs.writeFileSync(env.BOX_MCP_INSTRUCTIONS_FILE, 'x'.repeat(9000));
-  const long = await describe();
-  assert.match(long, /truncated — read the rest with: cat /);
-  assert.ok(long.length < 11_000);
+  // …and reading them is just the bash tool.
+  const r = await callBash(access, { command: `cat ${env.BOX_MCP_INSTRUCTIONS_FILE}` });
+  assert.match(r.content[0].text, /canary-7431/);
 
   fs.rmSync(env.BOX_MCP_INSTRUCTIONS_FILE);
 });

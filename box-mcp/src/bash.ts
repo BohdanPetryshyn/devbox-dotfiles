@@ -10,7 +10,6 @@ import {
   BASH_MAX_OUTPUT_CHARS,
   BASH_MAX_TIMEOUT_MS,
   INSTRUCTIONS_FILE,
-  INSTRUCTIONS_MAX_CHARS,
   OUTPUT_DIR,
   SHELL_ENV_FILE
 } from './config.ts';
@@ -46,29 +45,19 @@ How it behaves:
 This is a real machine with real data: be careful with destructive commands.`;
 
 /**
- * Tool description = how the tool behaves + the machine's own CLAUDE.md. Read on
- * every call (the MCP server is rebuilt per request), so edits to the file show
- * up the next time the client lists tools — no restart.
+ * Tool description = how the tool behaves + a pointer to the machine's own
+ * CLAUDE.md. The description is the one piece of server text every MCP client
+ * puts in front of the model, so that's where the "read this first" lives. Only
+ * a pointer, not the contents: always current, and free in conversations that
+ * never touch the box.
  */
 export function bashToolDescription(): string {
-  let instructions = '';
-  try {
-    instructions = fs.readFileSync(INSTRUCTIONS_FILE, 'utf8').trim();
-  } catch {
-    // no instructions file on this machine
-  }
-  if (!instructions) return BASE_DESCRIPTION;
-
-  const shown = instructions.length > INSTRUCTIONS_MAX_CHARS
-    ? `${instructions.slice(0, INSTRUCTIONS_MAX_CHARS)}\n[… truncated — read the rest with: cat ${INSTRUCTIONS_FILE}]`
-    : instructions;
+  if (!fs.existsSync(INSTRUCTIONS_FILE)) return BASE_DESCRIPTION;
+  const home = os.homedir();
+  const shown = INSTRUCTIONS_FILE.startsWith(home + path.sep) ? `~${INSTRUCTIONS_FILE.slice(home.length)}` : INSTRUCTIONS_FILE;
   return `${BASE_DESCRIPTION}
 
-The owner's standing instructions for working on this machine follow (from ${INSTRUCTIONS_FILE}). Follow them. Parts written for Claude Code itself (skills, hooks, slash commands) don't apply here. Your copy may be cached: if something looks out of date, re-read the file. When you work inside a project directory, read its own CLAUDE.md first if it has one.
-
-<machine-instructions>
-${shown}
-</machine-instructions>`;
+Before your first command in a conversation, read the owner's standing instructions for this machine with \`cat ${shown}\`, and follow them. Once per conversation is enough. Parts written for Claude Code itself (skills, hooks, slash commands) don't apply to you. Likewise, before working inside a project directory, read its own CLAUDE.md if it has one.`;
 }
 
 const expandHome = (p: string) => (p === '~' ? os.homedir() : p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p);
