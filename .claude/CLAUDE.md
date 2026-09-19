@@ -9,3 +9,7 @@ Bare git repo at `~/.dotfiles` versioning config files in place (worktree is `$H
 `bootstrap.sh` provisions a fresh Ubuntu machine into this setup. Idempotent — safe to rerun whenever the dotfiles or the script itself change.
 
 Secrets are deliberately untracked.
+
+## Tailscale links
+
+When sharing a URL for something served on this machine over Tailscale, give both the MagicDNS hostname and the Tailscale IP. Get them from `tailscale status --self --peers=false` (columns 2 and 1).
