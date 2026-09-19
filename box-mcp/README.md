@@ -31,17 +31,11 @@ and carries on by itself. It refuses to touch :443 if Tailscale is already
 serving something else there. Safe to rerun.
 
 Then in Claude: **Settings → Connectors → Add custom connector**, paste the URL,
-and click **Connect**. A page shows a one-time code:
-
-```sh
-ssh <box> box-mcp approve K7Q2-MXPD
-```
-
-The page notices the approval and returns to Claude. That one login covers
-every device on the Claude account (web, desktop, mobile, Cowork) and lasts as
-long as the connector is used at least once every 90 days.
-
-Set the `bash` tool to **ask every time** in the connector's tool permissions.
+and click **Connect**. The page that opens shows a one-time code and the exact
+`ssh … box-mcp approve <CODE>` command to run; once you do, it returns to Claude
+by itself. That one login covers every device on the Claude account (web,
+desktop, mobile, Cowork) and lasts as long as the connector is used at least
+once every 90 days.
 
 More than one box? Run `expose` on each and add one connector per box — the
 server identifies itself as `box-mcp-<hostname>`, so Claude can tell them apart.

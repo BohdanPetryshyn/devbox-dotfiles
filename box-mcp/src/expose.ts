@@ -109,21 +109,18 @@ export async function expose(getUrl: () => Promise<string>): Promise<void> {
   }
   if (!url) throw new Error(`The service did not come up — check: journalctl --user -u ${UNIT} -n 30`);
 
-  const host = os.hostname().split('.')[0];
   console.log(`
 ✔ box-mcp is live.
 
-  1. Claude → Settings → Connectors → Add custom connector
-       Name:  ${host}
-       URL:   ${url}
-  2. Click Connect. The page shows a one-time code — approve it from a terminal:
-       ssh ${host} box-mcp approve <CODE>
-  3. In the connector's tool permissions set "bash" to ask every time.
+  Claude → Settings → Connectors → Add custom connector
+    Name:  ${os.hostname().split('.')[0]}
+    URL:   ${url}
+  Click Connect and follow the page it opens.
 
   One approval covers every device on that Claude account.
   (The first request can take ~10 s while Tailscale fetches the TLS certificate.)
 
-  Turn it off again:  box-mcp unexpose      Log connectors out:  box-mcp revoke --all
+  Turn it off again:  box-mcp unexpose
 `);
 }
 
