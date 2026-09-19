@@ -7,7 +7,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { getOAuthProtectedResourceMetadataUrl, mcpAuthRouter } from '@modelcontextprotocol/sdk/server/auth/router.js';
 import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js';
 import { ADMIN_SOCKET, BASH_MAX_TIMEOUT_MS, HOST_LABEL, PORT, waitForPublicUrl } from './config.ts';
-import { BASH_TOOL_DESCRIPTION, runBash } from './bash.ts';
+import { bashToolDescription, runBash } from './bash.ts';
 import { BoxOAuthProvider, formatUserCode } from './oauth.ts';
 import { now, Store } from './store.ts';
 
@@ -25,7 +25,7 @@ function buildMcpServer(): McpServer {
     'bash',
     {
       title: `Run bash on ${HOST_LABEL}`,
-      description: BASH_TOOL_DESCRIPTION,
+      description: bashToolDescription(),
       inputSchema: {
         command: z.string().min(1).describe('The bash command line to run.'),
         cwd: z.string().optional().describe('Working directory (absolute, or starting with ~). Defaults to the home directory.'),

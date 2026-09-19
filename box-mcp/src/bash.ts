@@ -9,6 +9,8 @@ import {
   BASH_MAX_OUTPUT_BYTES,
   BASH_MAX_OUTPUT_CHARS,
   BASH_MAX_TIMEOUT_MS,
+  INSTRUCTIONS_FILE,
+  INSTRUCTIONS_MAX_CHARS,
   OUTPUT_DIR,
   SHELL_ENV_FILE
 } from './config.ts';
@@ -30,7 +32,7 @@ export type BashContext = {
 
 export type BashResult = { text: string; isError: boolean };
 
-export const BASH_TOOL_DESCRIPTION = `Run a bash command on the user's remote dev box (${os.hostname()}) as user "${os.userInfo().username}", who has passwordless sudo.
+const BASE_DESCRIPTION = `Run a bash command on the user's remote dev box (${os.hostname()}) as user "${os.userInfo().username}", who has passwordless sudo.
 
 How it behaves:
 - Each call is a fresh non-interactive \`bash -c\` with no TTY and no stdin. Nothing carries over between calls: no working directory, no env vars, no shell functions. Pass \`cwd\` (or \`cd dir && …\`) every time; it defaults to the home directory.
@@ -42,6 +44,32 @@ How it behaves:
 - To edit files use heredocs, \`sed -i\`, \`patch\`, or a short python/node script.
 
 This is a real machine with real data: be careful with destructive commands.`;
+
+/**
+ * Tool description = how the tool behaves + the machine's own CLAUDE.md. Read on
+ * every call (the MCP server is rebuilt per request), so edits to the file show
+ * up the next time the client lists tools — no restart.
+ */
+export function bashToolDescription(): string {
+  let instructions = '';
+  try {
+    instructions = fs.readFileSync(INSTRUCTIONS_FILE, 'utf8').trim();
+  } catch {
+    // no instructions file on this machine
+  }
+  if (!instructions) return BASE_DESCRIPTION;
+
+  const shown = instructions.length > INSTRUCTIONS_MAX_CHARS
+    ? `${instructions.slice(0, INSTRUCTIONS_MAX_CHARS)}\n[… truncated — read the rest with: cat ${INSTRUCTIONS_FILE}]`
+    : instructions;
+  return `${BASE_DESCRIPTION}
+
+The owner's standing instructions for working on this machine follow (from ${INSTRUCTIONS_FILE}). Follow them. Parts written for Claude Code itself (skills, hooks, slash commands) don't apply here. Your copy may be cached: if something looks out of date, re-read the file. When you work inside a project directory, read its own CLAUDE.md first if it has one.
+
+<machine-instructions>
+${shown}
+</machine-instructions>`;
+}
 
 const expandHome = (p: string) => (p === '~' ? os.homedir() : p.startsWith('~/') ? path.join(os.homedir(), p.slice(2)) : p);
 

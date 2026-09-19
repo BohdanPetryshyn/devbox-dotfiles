@@ -43,6 +43,14 @@ export const BASH_MAX_OUTPUT_CHARS = 30_000;
 /** Hard cap on what a single foreground command may write before it is killed. */
 export const BASH_MAX_OUTPUT_BYTES = 50 * 1024 * 1024;
 
+/**
+ * Standing instructions for whoever drives the shell, appended to the tool
+ * description — the one piece of server text every MCP client puts in front of
+ * the model. Defaults to the user's global Claude Code instructions.
+ */
+export const INSTRUCTIONS_FILE = process.env.BOX_MCP_INSTRUCTIONS_FILE ?? path.join(os.homedir(), '.claude', 'CLAUDE.md');
+export const INSTRUCTIONS_MAX_CHARS = 8000;
+
 /** Short host name used in the `ssh <host> box-mcp approve …` hint. */
 export const HOST_LABEL = process.env.BOX_MCP_HOST_LABEL ?? os.hostname().split('.')[0];
 

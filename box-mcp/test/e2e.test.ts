@@ -22,7 +22,8 @@ const env = {
   BOX_MCP_PORT: String(PORT),
   BOX_MCP_STATE_DIR: stateDir,
   BOX_MCP_PUBLIC_URL: BASE,
-  BOX_MCP_REFRESH_GRACE: '2'
+  BOX_MCP_REFRESH_GRACE: '2',
+  BOX_MCP_INSTRUCTIONS_FILE: path.join(stateDir, 'CLAUDE.md')
 };
 
 let server: ChildProcess;
@@ -221,6 +222,33 @@ test('the bash tool works over MCP with the token', async () => {
   const audit = fs.readFileSync(path.join(stateDir, 'audit.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)).at(-1);
   assert.equal(audit.client, clientId);
   assert.ok(audit.grant);
+});
+
+test('the machine CLAUDE.md rides along in the tool description, live', async () => {
+  const describe = async () => {
+    const transport = new StreamableHTTPClientTransport(new URL(`${BASE}/mcp`), { requestInit: { headers: { authorization: `Bearer ${access}` } } });
+    const client = new Client({ name: 'e2e', version: '0' });
+    await client.connect(transport);
+    try {
+      return (await client.listTools()).tools[0].description ?? '';
+    } finally {
+      await client.close();
+    }
+  };
+
+  assert.doesNotMatch(await describe(), /machine-instructions/, 'no file → no section');
+
+  fs.writeFileSync(env.BOX_MCP_INSTRUCTIONS_FILE, '# House rules\nAlways use the canary-7431 deploy script.\n');
+  const withFile = await describe();
+  assert.match(withFile, /<machine-instructions>\n# House rules\nAlways use the canary-7431 deploy script\.\n<\/machine-instructions>/);
+  assert.match(withFile, /^Run a bash command/, 'behaviour notes still come first');
+
+  fs.writeFileSync(env.BOX_MCP_INSTRUCTIONS_FILE, 'x'.repeat(9000));
+  const long = await describe();
+  assert.match(long, /truncated — read the rest with: cat /);
+  assert.ok(long.length < 11_000);
+
+  fs.rmSync(env.BOX_MCP_INSTRUCTIONS_FILE);
 });
 
 test('state on disk: private, and holds no usable secrets', async () => {

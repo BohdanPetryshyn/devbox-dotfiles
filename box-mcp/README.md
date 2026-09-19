@@ -76,6 +76,17 @@ approval.
   it with ordinary `systemctl --user` / `tail`.
 - Every call is appended to `~/.local/state/box-mcp/audit.jsonl`.
 
+### Your CLAUDE.md comes along
+
+The tool description ends with the contents of `~/.claude/CLAUDE.md` (first 8k
+characters), so a Claude chat knows the machine's conventions before its first
+command — the same standing instructions Claude Code gets on the box. It's read
+fresh whenever the client lists tools; clients cache that list, so an edit shows
+up in new conversations after the connector next refreshes. The description also
+tells Claude to read a project's own `CLAUDE.md` before working in it. Point
+`BOX_MCP_INSTRUCTIONS_FILE` elsewhere to give chat different instructions, or at
+a missing file to turn this off.
+
 ## Security
 
 - **Login = SSH access.** `/authorize` never asks for a secret; it shows a code
@@ -101,6 +112,7 @@ Environment variables (set them with `systemctl --user edit box-mcp`):
 | `BOX_MCP_PUBLIC_URL` | `https://` + this machine's Tailscale DNS name |
 | `BOX_MCP_STATE_DIR` | `~/.local/state/box-mcp` |
 | `BOX_MCP_REDIRECT_URIS` | Claude's two OAuth callbacks |
+| `BOX_MCP_INSTRUCTIONS_FILE` | `~/.claude/CLAUDE.md` — appended to the tool description (see below) |
 | `BOX_MCP_HOST_LABEL` | short hostname (shown in the `ssh … approve` hint) |
 
 Lifetimes and limits are constants in [`src/config.ts`](src/config.ts).
