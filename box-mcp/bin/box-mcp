@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Launcher for the box-mcp CLI and server. Works from a bare `ssh host box-mcp …`
+# (non-interactive, minimal PATH) because it loads shell-env.sh itself.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+# shellcheck source=../shell-env.sh
+. "$ROOT/shell-env.sh"
+
+cd "$ROOT"
+exec node --disable-warning=ExperimentalWarning "$ROOT/src/cli.ts" "$@"

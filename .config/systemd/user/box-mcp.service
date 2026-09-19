@@ -1,0 +1,17 @@
+[Unit]
+Description=box-mcp: remote bash MCP server for Claude (OAuth, approved over SSH)
+Documentation=file://%h/box-mcp/README.md
+After=network-online.target
+
+[Service]
+ExecStart=%h/box-mcp/bin/box-mcp serve
+# Also covers boot races: the public URL comes from `tailscale status`, which
+# isn't answering yet when the user manager starts before tailscaled is up.
+Restart=always
+RestartSec=3
+# Deliberately no sandboxing: the whole point is a full shell as this user.
+# Background jobs are launched as their own transient units (systemd-run), so
+# restarting this service doesn't take them down.
+
+[Install]
+WantedBy=default.target

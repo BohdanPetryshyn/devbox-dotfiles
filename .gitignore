@@ -23,6 +23,10 @@
 /.asdf/
 /.local/
 
+# box-mcp dependencies (restored by `npm ci` in bootstrap.sh). Its runtime
+# state — OAuth tokens, audit log — lives under /.local/state/, ignored above.
+/box-mcp/node_modules/
+
 # Secrets / credentials
 /.ssh/
 /.claude.json

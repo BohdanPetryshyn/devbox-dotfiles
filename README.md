@@ -142,6 +142,24 @@ or phone two ways:
 - **VS Code port forwarding**: connected over Remote-SSH, the **Ports**
   panel auto-forwards the box's `localhost:3000` to your laptop's.
 
+### A shell on the box from Claude chat and Cowork
+
+Claude Code runs *on* the box. To reach the box from a regular Claude chat or
+a Cowork session instead — check a log from your phone, kick off a script
+mid-conversation — [`box-mcp`](box-mcp/) exposes a single `bash` tool as a
+custom connector. It is served through Tailscale Funnel and guarded by its own
+OAuth server, where logging in means approving a one-time code over SSH:
+
+```sh
+tailscale funnel --bg 8808      # one-time: put it on the internet
+box-mcp url                     # paste into Claude → Settings → Connectors
+ssh box-1 box-mcp approve K7Q2-MXPD   # the code Claude's login page shows you
+```
+
+One approval covers every device on your Claude account and lasts as long as
+you keep using it. It's off until you run the Funnel command. Details and the
+security model: [box-mcp/README.md](box-mcp/README.md).
+
 ## Curious?
 
 If you'd like to try this setup or see the full workflow in action — agents
