@@ -13,3 +13,7 @@ Secrets are deliberately untracked.
 ## Tailscale links
 
 When sharing a URL for something served on this machine over Tailscale, give both the MagicDNS hostname and the Tailscale IP. Get them from `tailscale status --self --peers=false` (columns 2 and 1).
+
+## Public links
+
+Default to tailnet links. If I can't reach the tailnet or ask for a public URL, run `tailscale funnel --bg --https=8443 <port>` and share the URL it prints. Use 8443 or 10000, never 443 (box-mcp); `tailscale funnel status` shows what's taken. The URL has no auth: say so when sharing, and turn it off when done with `tailscale funnel --https=8443 off`.
