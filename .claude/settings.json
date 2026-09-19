@@ -1,12 +1,12 @@
 {
+  "permissions": {
+    "defaultMode": "auto"
+  },
+  "model": "fable[1m]",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
   },
-  "permissions": {
-    "defaultMode": "auto"
-  },
-  "model": "claude-fable-5[1m]",
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true,
     "telegram@claude-plugins-official": true
