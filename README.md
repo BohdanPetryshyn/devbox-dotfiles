@@ -12,6 +12,9 @@ working after you close your laptop, and remain usable from your phone.
 - **git + GitHub** ready for agents to pull and push unattended.
 - **Reachable from anywhere** — a Tailscale mesh VPN puts the box and its
   dev servers a hop away from your laptop or phone.
+- **A shell for Claude chat and Cowork (opt-in)** — `box-mcp expose` gives
+  regular Claude conversations a `bash` tool on the box, with logins approved
+  over SSH.
 - **A comfortable shell** — bash with
   [ble.sh](https://github.com/akinomyoga/ble.sh) autosuggestions, syntax
   highlighting, and prefix history search.
@@ -151,14 +154,14 @@ custom connector. It is served through Tailscale Funnel and guarded by its own
 OAuth server, where logging in means approving a one-time code over SSH:
 
 ```sh
-tailscale funnel --bg 8808      # one-time: put it on the internet
-box-mcp url                     # paste into Claude → Settings → Connectors
+box-mcp expose                        # start it, open Funnel, print the connector URL
 ssh box-1 box-mcp approve K7Q2-MXPD   # the code Claude's login page shows you
 ```
 
 One approval covers every device on your Claude account and lasts as long as
-you keep using it. It's off until you run the Funnel command. Details and the
-security model: [box-mcp/README.md](box-mcp/README.md).
+you keep using it. It's opt-in: bootstrap only installs it, and nothing runs or
+is reachable until `box-mcp expose` (`box-mcp unexpose` turns it back off).
+Details and the security model: [box-mcp/README.md](box-mcp/README.md).
 
 ## Curious?
 

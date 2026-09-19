@@ -66,6 +66,8 @@ async function callBash(accessToken: string, args: Record<string, unknown>) {
   const client = new Client({ name: 'e2e', version: '0' });
   await client.connect(transport);
   try {
+    // Several boxes can be connected at once: the host has to be part of the identity.
+    assert.equal(client.getServerVersion()?.name, `box-mcp-${os.hostname().split('.')[0]}`);
     const tools = await client.listTools();
     assert.deepEqual(tools.tools.map(t => t.name), ['bash']);
     return (await client.callTool({ name: 'bash', arguments: args })) as { content: { text: string }[]; isError?: boolean };

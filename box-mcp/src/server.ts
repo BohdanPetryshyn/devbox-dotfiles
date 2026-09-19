@@ -6,12 +6,12 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { getOAuthProtectedResourceMetadataUrl, mcpAuthRouter } from '@modelcontextprotocol/sdk/server/auth/router.js';
 import { requireBearerAuth } from '@modelcontextprotocol/sdk/server/auth/middleware/bearerAuth.js';
-import { ADMIN_SOCKET, BASH_MAX_TIMEOUT_MS, PORT, resolvePublicUrl } from './config.ts';
+import { ADMIN_SOCKET, BASH_MAX_TIMEOUT_MS, HOST_LABEL, PORT, waitForPublicUrl } from './config.ts';
 import { BASH_TOOL_DESCRIPTION, runBash } from './bash.ts';
 import { BoxOAuthProvider, formatUserCode } from './oauth.ts';
 import { now, Store } from './store.ts';
 
-const publicUrl = resolvePublicUrl();
+const publicUrl = await waitForPublicUrl();
 const mcpUrl = new URL('/mcp', publicUrl);
 const store = new Store();
 const provider = new BoxOAuthProvider(store, mcpUrl);
@@ -19,11 +19,12 @@ const provider = new BoxOAuthProvider(store, mcpUrl);
 // --- MCP: one tool --------------------------------------------------------------
 
 function buildMcpServer(): McpServer {
-  const server = new McpServer({ name: 'box-mcp', version: '0.1.0' });
+  // The host is part of the identity: with several boxes connected, Claude has to tell them apart.
+  const server = new McpServer({ name: `box-mcp-${HOST_LABEL}`, title: `Shell on ${HOST_LABEL}`, version: '0.1.0' });
   server.registerTool(
     'bash',
     {
-      title: 'Run bash on the box',
+      title: `Run bash on ${HOST_LABEL}`,
       description: BASH_TOOL_DESCRIPTION,
       inputSchema: {
         command: z.string().min(1).describe('The bash command line to run.'),
@@ -79,7 +80,7 @@ app.use(
     provider,
     issuerUrl: publicUrl,
     resourceServerUrl: mcpUrl,
-    resourceName: 'box-mcp',
+    resourceName: `box-mcp (${HOST_LABEL})`,
     // Claude registers once and keeps that client for the life of the connector;
     // an expiring secret would force a relogin regardless of token lifetimes.
     clientRegistrationOptions: { clientSecretExpirySeconds: 0 }

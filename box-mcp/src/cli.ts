@@ -3,6 +3,10 @@ import { ADMIN_SOCKET } from './config.ts';
 
 const HELP = `box-mcp — remote bash for Claude, approved over SSH
 
+  box-mcp expose            turn it on: start the service, open Tailscale Funnel, print the connector URL
+  box-mcp unexpose [--revoke]  turn it off (optionally logging every connector out)
+  box-mcp status            is it running / public / who is logged in
+
   box-mcp approve <CODE>    approve the login showing CODE in your browser
   box-mcp deny <CODE>       reject it
   box-mcp pending           list logins waiting for approval
@@ -31,7 +35,7 @@ function call(request: Record<string, unknown>): Promise<Reply> {
       const code = (err as NodeJS.ErrnoException).code;
       reject(
         code === 'ENOENT' || code === 'ECONNREFUSED'
-          ? new Error('box-mcp server is not running (systemctl --user status box-mcp).')
+          ? new Error('box-mcp is not running. Turn it on with `box-mcp expose`.')
           : err
       );
     });
@@ -59,6 +63,24 @@ async function main() {
     case 'serve':
       await import('./server.ts');
       return;
+
+    case 'expose': {
+      const { expose } = await import('./expose.ts');
+      await expose(async () => (await call({ cmd: 'info' })).mcpUrl);
+      return;
+    }
+
+    case 'unexpose': {
+      const { unexpose } = await import('./expose.ts');
+      await unexpose(arg === '--revoke' ? async () => (await call({ cmd: 'revoke', id: '--all' })).revoked : undefined);
+      return;
+    }
+
+    case 'status': {
+      const { status } = await import('./expose.ts');
+      await status(async () => (await call({ cmd: 'grants' })).grants.length);
+      return;
+    }
 
     case 'approve':
     case 'deny': {

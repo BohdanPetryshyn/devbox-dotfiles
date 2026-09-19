@@ -137,24 +137,19 @@ fi
 
 ### 10. box-mcp (remote bash for Claude chat / Cowork) ------------------------
 # ~/box-mcp is an MCP server exposing one `bash` tool to claude.ai, with its own
-# OAuth server whose login is approved over SSH (see ~/box-mcp/README.md). It
-# listens on localhost only — nothing is reachable from outside until Tailscale
-# Funnel is pointed at it in the manual follow-ups below.
+# OAuth server whose login is approved over SSH (see ~/box-mcp/README.md).
+# This only installs it. Nothing runs and nothing is reachable until you opt in
+# with `box-mcp expose` (manual follow-ups below).
 npm ci --prefix "$HOME/box-mcp" --omit=dev --no-audit --no-fund
 
 # /usr/local/bin is on the PATH of a bare `ssh box box-mcp approve <CODE>`;
 # ~/.local/bin is not (non-interactive, non-login shell).
 sudo ln -sf "$HOME/box-mcp/bin/box-mcp" /usr/local/bin/box-mcp
 
-# Lingering keeps the user's systemd instance (and so the service) running
-# without an open login session, and starts it at boot.
-sudo loginctl enable-linger "$USER"
-if systemctl --user daemon-reload 2>/dev/null; then
-  systemctl --user enable box-mcp
-  # restart rather than start, so reruns pick up code pulled in step 3
+# Already opted in on this machine? Then pick up the code pulled in step 3.
+if systemctl --user is-enabled --quiet box-mcp 2>/dev/null; then
+  systemctl --user daemon-reload
   systemctl --user restart box-mcp
-else
-  echo "box-mcp: no user systemd session yet — it will start on next login/boot." >&2
 fi
 
 ### 11. Manual follow-ups ----------------------------------------------------
@@ -167,9 +162,8 @@ bootstrap complete. Manual follow-ups, in order:
   3. claude                            # sign in
   4. ask claude to add ~/.gitconfig.local with your git identity
   5. sudo tailscale up                 # browser-auth into the tailnet
-  6. (optional) give Claude chat/Cowork a shell on this box — ~/box-mcp/README.md:
-       sudo tailscale set --operator=$USER && tailscale funnel --bg 8808
-       box-mcp url                     # paste into Claude → Settings → Connectors
+  6. (optional) give Claude chat/Cowork a shell on this box:
+       box-mcp expose                  # starts it, opens Tailscale Funnel, prints what to do next
 
 Using this setup (tmux + Claude Code workflow, screenshots, ports):
   ~/README.md  ·  github.com/BohdanPetryshyn/devbox-dotfiles

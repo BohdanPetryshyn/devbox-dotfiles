@@ -62,3 +62,16 @@ export function resolvePublicUrl(): URL {
   }
   throw new Error('Cannot determine public URL: set BOX_MCP_PUBLIC_URL or bring Tailscale up.');
 }
+
+/** At boot the service can start before tailscaled has its name; wait a little rather than crash-loop. */
+export async function waitForPublicUrl(timeoutMs = 90_000): Promise<URL> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      return resolvePublicUrl();
+    } catch (err) {
+      if (Date.now() > deadline) throw err;
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+}

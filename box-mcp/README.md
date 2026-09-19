@@ -16,14 +16,19 @@ claude.ai ──HTTPS──▶ Tailscale Funnel :443 ──▶ 127.0.0.1:8808  b
 
 ## Set up
 
-`bootstrap.sh` installs dependencies, links the CLI and starts the service. It
-listens on localhost only, so nothing is exposed until you open Funnel:
+`bootstrap.sh` only installs it. Nothing runs and nothing is reachable until you
+opt in, on the box, with Tailscale connected:
 
 ```sh
-sudo tailscale set --operator=$USER
-tailscale funnel --bg 8808    # first run prints a link to enable Funnel + HTTPS on the tailnet
-box-mcp url                   # → https://<machine>.<tailnet>.ts.net/mcp
+box-mcp expose
 ```
+
+That one command lets your user manage Tailscale Funnel (`sudo`, once), enables
+systemd lingering, starts the service, opens Funnel on :443 → `127.0.0.1:8808`,
+and prints the connector URL. The first time Funnel is used on a tailnet it
+prints a link for the tailnet admin to enable Funnel + HTTPS certificates, waits,
+and carries on by itself. It refuses to touch :443 if Tailscale is already
+serving something else there. Safe to rerun.
 
 Then in Claude: **Settings → Connectors → Add custom connector**, paste the URL,
 and click **Connect**. A page shows a one-time code:
@@ -38,19 +43,26 @@ long as the connector is used at least once every 90 days.
 
 Set the `bash` tool to **ask every time** in the connector's tool permissions.
 
+More than one box? Run `expose` on each and add one connector per box — the
+server identifies itself as `box-mcp-<hostname>`, so Claude can tell them apart.
+
 ## CLI
 
 ```
-box-mcp approve <CODE>     approve the login showing CODE in your browser
-box-mcp deny <CODE>        reject it
-box-mcp pending            logins waiting for approval
-box-mcp grants             active logins
-box-mcp revoke <id|--all>  log a connector out
-box-mcp url                connector URL
+box-mcp expose               turn it on (service + Funnel), print the connector URL
+box-mcp unexpose [--revoke]  turn it off; --revoke also logs every connector out
+box-mcp status               running? public? how many logins?
+
+box-mcp approve <CODE>       approve the login showing CODE in your browser
+box-mcp deny <CODE>          reject it
+box-mcp pending              logins waiting for approval
+box-mcp grants               active logins
+box-mcp revoke <id|--all>    log a connector out
+box-mcp url                  connector URL
 ```
 
-Kill switch: `systemctl --user stop box-mcp`, or `tailscale funnel reset` to
-take it off the internet while leaving it running.
+`unexpose` keeps logins by default, so a later `expose` resumes without a new
+approval.
 
 ## The `bash` tool
 
