@@ -1,0 +1,25 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!-- Seed for the remote desktop's background: solid blue, no image.
+     desktop-session.service copies this into ~/.config/xfce4/xfconf/ only if
+     no xfce4-desktop.xml exists yet, so a wallpaper picked later sticks.
+     "monitorVNC-0" is the output name Xvnc gives its screen. -->
+<channel name="xfce4-desktop" version="1.0">
+  <property name="last-settings-migration-version" type="uint" value="1"/>
+  <property name="backdrop" type="empty">
+    <property name="screen0" type="empty">
+      <property name="monitorVNC-0" type="empty">
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="0"/>
+          <property name="rgba1" type="array">
+            <value type="double" value="0.176"/>
+            <value type="double" value="0.373"/>
+            <value type="double" value="0.659"/>
+            <value type="double" value="1"/>
+          </property>
+        </property>
+      </property>
+    </property>
+  </property>
+</channel>

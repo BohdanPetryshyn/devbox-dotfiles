@@ -12,6 +12,9 @@ working after you close your laptop, and remain usable from your phone.
 - **git + GitHub** ready for agents to pull and push unattended.
 - **Reachable from anywhere** — a Tailscale mesh VPN puts the box and its
   dev servers a hop away from your laptop or phone.
+- **A desktop in a browser tab, with a Chrome Claude can drive** — log in to
+  your accounts once on the box's remote desktop, then ask Claude to "use my
+  browser" and watch it work.
 - **A shell for Claude chat and Cowork (opt-in)** — `box-mcp expose` gives
   regular Claude conversations a `bash` tool on the box, with logins approved
   over SSH.
@@ -51,6 +54,7 @@ working after you close your laptop, and remain usable from your phone.
    gh auth login      # GitHub auth — also wires up git push/pull
    claude             # sign in to Claude Code
    sudo tailscale up  # join your tailnet (browser auth)
+   desktop-url        # link to the box's remote desktop (see below)
    ```
 
    Set your git identity in `~/.gitconfig.local` (or just ask Claude to):
@@ -144,6 +148,32 @@ or phone two ways:
   name, or `100.x` IP — from any device on your tailnet, phone included.
 - **VS Code port forwarding**: connected over Remote-SSH, the **Ports**
   panel auto-forwards the box's `localhost:3000` to your laptop's.
+
+### A browser Claude can drive while you watch
+
+The box runs a small desktop (XFCE) that you open in a browser tab from any
+device on your tailnet:
+
+```sh
+desktop-url        # prints https://<box>.<tailnet>.ts.net:6080/ — or ask Claude for "the desktop link"
+```
+
+Chrome is already open there. Log in to whatever you want Claude to work
+with, then ask it to *use my browser*: it attaches to that same Chrome (over
+CDP on localhost, via `playwright-cli`) and you watch it click around live.
+Grab the mouse any time — for a captcha or a 2FA prompt, say — and Claude
+carries on afterwards. The desktop stays up when you close the tab.
+
+- **Pasting**: inside the desktop it's `Ctrl+V`, not `Cmd+V`. To bring text
+  over from your Mac, open the clipboard panel in the toolbar on the left
+  edge, paste there, then `Ctrl+V` in the desktop.
+- **Who can reach it**: devices on your tailnet, nothing else — there is no
+  password beyond that. Claude acts as you in every account that Chrome is
+  logged in to, so log in only to what you want it to use.
+- The first `desktop-url` may print a Tailscale link to enable HTTPS for your
+  tailnet — a one-time click.
+
+Pieces live in [`desktop/`](desktop/) and three `desktop-*` systemd user units.
 
 ### A shell on the box from Claude chat and Cowork
 

@@ -1,0 +1,24 @@
+[Unit]
+Description=Remote desktop: XFCE session on display :1
+Requires=desktop-x.service
+After=desktop-x.service
+PartOf=desktop-x.service
+
+[Service]
+Environment=DISPLAY=:1 XDG_SESSION_TYPE=x11 XDG_CURRENT_DESKTOP=XFCE
+# ~/desktop/share first: its google-chrome.desktop and WebBrowser helper make
+# the menu entry and the dock's browser icon start ~/desktop/bin/chrome.
+Environment=XDG_DATA_DIRS=%h/desktop/share:/usr/local/share:/usr/share
+# Wait for the X socket (Xvnc is Type=simple, so "started" != "ready").
+ExecStartPre=/bin/sh -c 'for i in $(seq 100); do [ -S /tmp/.X11-unix/X1 ] && exit 0; sleep 0.1; done; exit 1'
+# Seed the stock panel layout, otherwise the first start blocks on a
+# "default config or empty panel?" dialog.
+ExecStartPre=/bin/sh -c 'f=%h/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml; [ -e "$f" ] || install -D -m 644 /etc/xdg/xfce4/panel/default.xml "$f"'
+# Seed the background (solid blue) the same way; without it the desktop is black.
+ExecStartPre=/bin/sh -c 'f=%h/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml; [ -e "$f" ] || install -D -m 644 %h/desktop/xfconf/xfce4-desktop.xml "$f"'
+ExecStart=/usr/bin/xfce4-session
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target

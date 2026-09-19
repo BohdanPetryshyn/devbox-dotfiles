@@ -1,0 +1,19 @@
+[Unit]
+Description=Remote desktop: Xvnc display :1 (the persistent screen)
+
+[Service]
+# Fresh X authority cookie each start, so only this user's processes can open
+# windows on :1.
+ExecStartPre=/bin/sh -c 'xauth -f %h/.Xauthority add :1 . "$(mcookie)"'
+# VNC listens on a unix socket only (-rfbport -1 = no TCP), mode 0600, so no
+# password is needed: reaching it already requires being this user.
+# desktop-web.service bridges the socket to the browser.
+ExecStart=/usr/bin/Xvnc :1 -auth %h/.Xauthority -nolisten tcp \
+  -geometry 1600x900 -depth 24 \
+  -rfbport -1 -rfbunixpath %t/desktop-vnc.sock -rfbunixmode 0600 \
+  -SecurityTypes None -AlwaysShared -AcceptSetDesktopSize
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target

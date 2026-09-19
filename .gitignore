@@ -27,10 +27,22 @@
 # state — OAuth tokens, audit log — lives under /.local/state/, ignored above.
 /box-mcp/node_modules/
 
+# noVNC client for the remote desktop (fetched, checksum-pinned, by bootstrap.sh)
+/desktop/web/novnc/
+
 # Secrets / credentials
 /.ssh/
 /.claude.json
 /.config/gh/
+
+# Remote desktop. The Chrome profile holds logged-in sessions (cookies there
+# are protected by file permissions only — see desktop/bin/chrome); .Xauthority
+# is the display's access cookie; .playwright-cli/ is page snapshots Claude
+# took while driving the browser from ~.
+/.config/chrome-desktop/
+/.config/google-chrome/
+/.Xauthority
+/.playwright-cli/
 
 # Per-machine secrets & env (API tokens, etc.) — sourced by .bashrc
 /.bashrc.local

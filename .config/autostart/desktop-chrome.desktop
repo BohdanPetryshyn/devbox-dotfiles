@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Chrome
+Comment=Open the desktop's Chrome (see ~/desktop/bin/chrome) when the session starts
+Exec=sh -c 'exec "$HOME/desktop/bin/chrome"'
+Icon=google-chrome

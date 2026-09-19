@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Print the link to this box's remote desktop, creating the `tailscale serve`
+# mapping on first use. Tailnet only — this never turns on Funnel. Safe to
+# rerun; Claude runs it whenever it is asked for the desktop link.
+set -euo pipefail
+
+PORT=6080   # desktop-web.service serves noVNC on 127.0.0.1:$PORT; same port on the tailnet
+
+json() { python3 -c "import json,sys; d=json.load(sys.stdin); print($1)"; }
+
+status=$(tailscale status --json --peers=false 2>/dev/null) || status='{}'
+if [ "$(json 'd.get("BackendState","")' <<<"$status")" != "Running" ]; then
+  echo "Tailscale isn't connected. Run \`sudo tailscale up\`, then \`desktop-url\` again." >&2
+  exit 1
+fi
+host=$(json 'd["Self"]["DNSName"].rstrip(".")' <<<"$status")
+
+systemctl --user start desktop-x desktop-session desktop-web
+
+if [ "$(tailscale serve status --json | json "'$host:$PORT' in (d.get('Web') or {})")" != "True" ]; then
+  # `tailscale serve` needs root unless this user is the Tailscale operator
+  # (same approach as `box-mcp expose`).
+  tailscale debug prefs | grep -q "\"OperatorUser\": \"$USER\"" \
+    || sudo tailscale set --operator="$USER"
+  # Not silenced: if HTTPS isn't enabled for the tailnet yet, this prints the
+  # link to click to enable it.
+  tailscale serve --bg --https="$PORT" "http://127.0.0.1:$PORT" >&2
+fi
+
+# Hostname only: the HTTPS certificate doesn't cover the Tailscale IP.
+echo "https://$host:$PORT/"

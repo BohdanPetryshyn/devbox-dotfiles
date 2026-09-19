@@ -1,0 +1,15 @@
+[Desktop Entry]
+# Overrides /usr/share/applications/google-chrome.desktop (desktop-session.service
+# puts ~/desktop/share first on XDG_DATA_DIRS) so the menu entry
+# starts the desktop's Chrome (same profile + CDP) via ~/desktop/bin/chrome.
+Version=1.0
+Type=Application
+Name=Google Chrome
+GenericName=Web Browser
+Exec=sh -c 'exec "$HOME/desktop/bin/chrome" "$@"' sh %U
+Icon=google-chrome
+Terminal=false
+StartupNotify=true
+StartupWMClass=Google-chrome
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;

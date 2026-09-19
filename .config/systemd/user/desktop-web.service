@@ -1,0 +1,15 @@
+[Unit]
+Description=Remote desktop: noVNC web client + WebSocket bridge to the VNC socket
+Requires=desktop-x.service
+After=desktop-x.service
+
+[Service]
+# Localhost only. `tailscale serve` (set up by ~/desktop/bin/desktop-url) is
+# what makes it reachable, over HTTPS, from the tailnet — and nowhere else.
+ExecStart=/usr/bin/websockify --web=%h/desktop/web --file-only --heartbeat=30 \
+  127.0.0.1:6080 --unix-target=%t/desktop-vnc.sock
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=default.target

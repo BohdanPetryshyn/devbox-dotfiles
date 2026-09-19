@@ -152,7 +152,85 @@ if systemctl --user is-enabled --quiet box-mcp 2>/dev/null; then
   systemctl --user restart box-mcp
 fi
 
-### 11. Manual follow-ups ----------------------------------------------------
+### 11. Remote desktop (a desktop in a browser tab + a Chrome Claude can drive)
+# A persistent XFCE desktop on display :1, viewable from any device on the
+# tailnet. Its Chrome exposes CDP on localhost, so Claude can drive the browser
+# you are logged in to while you watch (see "Remote desktop & browser" in
+# ~/.claude/CLAUDE.md). Three user units, checked out with the dotfiles:
+#   desktop-x        Xvnc, the screen. VNC on a unix socket: no TCP, no password.
+#   desktop-session  XFCE. Autostarts Chrome through ~/desktop/bin/chrome.
+#   desktop-web      noVNC + websockify on 127.0.0.1:6080.
+# This installs what they need and starts them. Nothing is reachable until
+# `desktop-url` (manual follow-ups) adds the tailnet-only `tailscale serve`.
+if [ "$(dpkg --print-architecture)" = amd64 ]; then
+  # --no-install-recommends keeps XFCE lean (~200 MB RAM idle).
+  sudo apt-get install -y --no-install-recommends \
+    tigervnc-standalone-server websockify \
+    xfce4-session xfwm4 xfce4-panel xfdesktop4 xfce4-settings \
+    xfce4-terminal xfce4-appfinder thunar exo-utils \
+    dbus-x11 xdg-utils x11-xserver-utils xauth \
+    adwaita-icon-theme librsvg2-common fonts-dejavu fonts-noto-color-emoji
+
+  # Google Chrome, not a Playwright-bundled Chromium: sites accept logins in
+  # it, and its .deb ships the AppArmor profile the sandbox needs on Ubuntu.
+  # The .deb also registers Google's apt repo.
+  if ! command -v google-chrome-stable >/dev/null 2>&1; then
+    tmpdir=$(mktemp -d)
+    chmod 755 "$tmpdir"   # apt reads the .deb as its sandbox user
+    curl -fsSL -o "$tmpdir/chrome.deb" \
+      https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+    sudo apt-get install -y --no-install-recommends "$tmpdir/chrome.deb"
+    rm -rf "$tmpdir"
+  fi
+
+  # Step 2 only auto-installs Ubuntu security updates. A browser holding
+  # logged-in sessions has to stay current too, so add Google's repo.
+  sudo tee /etc/apt/apt.conf.d/51unattended-upgrades-chrome >/dev/null <<'EOF'
+Unattended-Upgrade::Origins-Pattern {
+	"origin=Google LLC,codename=stable";
+};
+EOF
+
+  # noVNC, the in-browser VNC client: static files from the upstream release,
+  # pinned by checksum. Not apt's `novnc`, which drags in a system nodejs that
+  # would shadow the asdf one for non-interactive shells.
+  NOVNC_VERSION=1.6.0
+  NOVNC_SHA256=5066103959ef4e9b10f37e5a148627360dd8414e4cf8a7db92bdbd022e728aaa
+  NOVNC_DIR="$HOME/desktop/web/novnc"
+  if ! grep -qs "\"version\": \"$NOVNC_VERSION\"" "$NOVNC_DIR/package.json"; then
+    tmpdir=$(mktemp -d)
+    curl -fsSL -o "$tmpdir/novnc.tar.gz" \
+      "https://github.com/novnc/noVNC/archive/refs/tags/v$NOVNC_VERSION.tar.gz"
+    echo "$NOVNC_SHA256  $tmpdir/novnc.tar.gz" | sha256sum -c -
+    rm -rf "$NOVNC_DIR"
+    mkdir -p "$NOVNC_DIR"
+    # Only what the client needs — no tests, docs or utils.
+    tar xzf "$tmpdir/novnc.tar.gz" -C "$NOVNC_DIR" --strip-components=1 \
+      "noVNC-$NOVNC_VERSION"/{app,core,vendor,vnc.html,package.json,defaults.json,mandatory.json,LICENSE.txt}
+    rm -rf "$tmpdir"
+  fi
+
+  # playwright-cli: how Claude drives that Chrome (attaches over CDP, so it
+  # needs no browser download of its own).
+  if ! command -v playwright-cli >/dev/null 2>&1; then
+    npm install -g @playwright/cli
+    asdf reshim nodejs
+  fi
+
+  # On PATH for Claude and for a bare `ssh box desktop-url` (see box-mcp above).
+  sudo ln -sf "$HOME/desktop/bin/desktop-url" /usr/local/bin/desktop-url
+
+  # User units only run at boot / without a login session if lingering is on.
+  sudo loginctl enable-linger "$USER"
+  systemctl --user daemon-reload
+  # Deliberately not restarted on reruns: restarting desktop-x closes everything
+  # open on the desktop. After editing a unit: systemctl --user restart desktop-x
+  systemctl --user enable --now desktop-x desktop-session desktop-web
+else
+  echo "Skipping the remote desktop: it installs Google Chrome's amd64 .deb." >&2
+fi
+
+### 12. Manual follow-ups ----------------------------------------------------
 cat <<'EOF'
 
 bootstrap complete. Manual follow-ups, in order:
@@ -162,7 +240,10 @@ bootstrap complete. Manual follow-ups, in order:
   3. claude                            # sign in
   4. ask claude to add ~/.gitconfig.local with your git identity
   5. sudo tailscale up                 # browser-auth into the tailnet
-  6. (optional) give Claude chat/Cowork a shell on this box:
+  6. desktop-url                       # prints the remote desktop's link (tailnet only).
+                                       # Open it, log in to your accounts in its Chrome,
+                                       # then ask Claude to "use my browser".
+  7. (optional) give Claude chat/Cowork a shell on this box:
        box-mcp expose                  # starts it, opens Tailscale Funnel, prints what to do next
 
 Using this setup (tmux + Claude Code workflow, screenshots, ports):
