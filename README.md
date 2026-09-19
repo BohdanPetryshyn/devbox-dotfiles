@@ -23,14 +23,14 @@ working after you close your laptop, and remain usable from your phone.
 1. **(Optional)** Some providers (AWS, GCP) give you a fresh box with a
    passwordless-sudo non-root user already set up. Others (Hetzner, Contabo,
    …) drop you straight into a root shell. In that case, run this first
-   **as root** to create a `human` user, copy root's `authorized_keys` over,
+   **as root** to create an `agent` user, copy root's `authorized_keys` over,
    and harden SSH:
 
    ```sh
    curl -fsSL https://raw.githubusercontent.com/BohdanPetryshyn/devbox-dotfiles/main/root.sh | bash
    ```
 
-   Then log out and SSH back in as `human`.
+   Then log out and SSH back in as `agent`.
 
 2. As your normal user, run:
 

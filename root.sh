@@ -3,7 +3,7 @@
 #   curl -fsSL https://.../root.sh | bash
 #   or: bash root.sh [username]
 #
-# - Creates user (default: human), passwordless sudo
+# - Creates user (default: agent), passwordless sudo
 # - Copies root's authorized_keys to the new user
 # - Drops SSH hardening into /etc/ssh/sshd_config.d/99-hardening.conf
 # - Reloads sshd
@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-USERNAME="${1:-human}"
+USERNAME="${1:-agent}"
 
 if [[ $EUID -ne 0 ]]; then
   echo "must run as root" >&2
