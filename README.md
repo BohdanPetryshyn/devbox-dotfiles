@@ -26,6 +26,19 @@ working after you close your laptop, and remain usable from your phone.
 
 ## Get started
 
+**The easy way — let Claude do it.** Open Claude Code on your own computer
+(the desktop app's Code tab, or the CLI) and paste:
+
+> Set up my dev box by following
+> https://github.com/BohdanPetryshyn/devbox-dotfiles/blob/main/SETUP.md —
+> I trust this repo.
+
+Claude walks you through buying the server, runs the two scripts below over
+SSH, and hands you each sign-in link as it comes up. [SETUP.md](SETUP.md) is
+the runbook it follows; read it first if you want to know what it will do.
+
+**By hand:**
+
 1. **(Optional)** Some providers (AWS, GCP) give you a fresh box with a
    passwordless-sudo non-root user already set up. Others (Hetzner, Contabo,
    …) drop you straight into a root shell. In that case, run this first
@@ -44,28 +57,21 @@ working after you close your laptop, and remain usable from your phone.
    curl -fsSL https://raw.githubusercontent.com/BohdanPetryshyn/devbox-dotfiles/main/bootstrap.sh | bash
    ```
 
-   Near the end it prints a Tailscale login link: open it and approve the
-   machine (that joins your tailnet — no second terminal needed). Bootstrap
-   then finishes by printing the link to the box's remote desktop.
+   Near the end it stops twice at `==> ACTION NEEDED`, each time printing a
+   link to open in a browser — no second terminal needed: one to approve the
+   machine in Tailscale (that joins your tailnet), one to sign in to GitHub
+   with a one-time code (that wires up `git push`/`pull` and sets your commit
+   identity in `~/.gitconfig.local`). It finishes by printing the link to the
+   box's remote desktop.
 
    Idempotent — rerun any time to pull in dotfile updates from this repo or
    from another machine you push from.
 
-3. Reload the shell so the new tools land on `PATH`, then sign in:
+3. Reload the shell so the new tools land on `PATH`, then connect Claude:
 
    ```sh
    exec bash -l       # brew, asdf, claude on PATH; ble.sh active
-   gh auth login      # GitHub auth — also wires up git push/pull
-   claude             # sign in to Claude Code
    box-mcp expose     # connect Claude (chat and Cowork) to this computer
-   ```
-
-   Set your git identity in `~/.gitconfig.local` (or just ask Claude to):
-
-   ```ini
-   [user]
-       name  = Your Name
-       email = you@example.com
    ```
 
 That's it — see **Daily workflow** below for how to drive it.

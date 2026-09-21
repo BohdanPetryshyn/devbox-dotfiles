@@ -5,7 +5,7 @@
 # Usage on a fresh machine:
 #   curl -fsSL https://raw.githubusercontent.com/BohdanPetryshyn/devbox-dotfiles/main/bootstrap.sh | bash
 #
-set -euo pipefail
+set -Eeuo pipefail   # -E: the ERR trap in main() also fires inside functions
 
 DOTFILES_REPO="https://github.com/BohdanPetryshyn/devbox-dotfiles.git"
 DOTFILES_DIR="$HOME/.dotfiles"
@@ -21,6 +21,12 @@ dot() { git --git-dir="$DOTFILES_DIR" --work-tree="$HOME" "$@"; }
 # reruns from step 3 rewriting this very file while bash is still reading it.
 # Not indented, to keep the diff and the heredocs simple.
 main() {
+# Three greppable markers tell whoever is driving — a person, or an agent
+# following SETUP.md and polling the log — where things stand:
+#   ==> ACTION NEEDED: …     waiting on a person; the link to open follows
+#   ==> bootstrap FAILED …   stopped on an error
+#   bootstrap complete       the closing message (step 14)
+trap 'printf "\n==> bootstrap FAILED (line %s). Rerun the same command: it skips what is already done.\n" "$LINENO" >&2' ERR
 
 ### 1. Swap -------------------------------------------------------------------
 # Many cloud images ship with no swap. Without it, memory pressure can trip
@@ -147,7 +153,7 @@ fi
 # ~/box-mcp is an MCP server exposing one `bash` tool to claude.ai, with its own
 # OAuth server whose login is approved over SSH (see ~/box-mcp/README.md).
 # This only installs it. Nothing runs and nothing is reachable until
-# `box-mcp expose`, which the closing message (step 13) tells you to run.
+# `box-mcp expose`, which the closing message (step 14) tells you to run.
 npm ci --prefix "$HOME/box-mcp" --omit=dev --no-audit --no-fund
 
 # /usr/local/bin is on the PATH of a bare `ssh box box-mcp approve <CODE>`;
@@ -248,21 +254,44 @@ fi
 # `curl | bash`. Skipped once connected: a bare `tailscale up` on a configured
 # node errors about unmentioned flags.
 if ! tailscale status --json 2>/dev/null | grep -q '"BackendState": "Running"'; then
-  printf '\n==> Joining your tailnet: open the link below and approve this machine.\n\n'
-  sudo tailscale up || true
+  printf '\n==> ACTION NEEDED: join your tailnet. Open the link below and approve this machine.\n\n'
+  # Gives up after 15 minutes rather than waiting forever; a rerun gets a fresh link.
+  sudo tailscale up --timeout=15m || true
 fi
 
 # Adds the tailnet-only `tailscale serve` for the remote desktop and prints its
 # link. Tailscale's own output stays visible: on a tailnet without HTTPS enabled
 # yet, it is one more link to approve. Absent where step 11 was skipped.
+printf '\n==> Setting up the remote desktop link. If Tailscale prints a link below, open it:\n    it enables HTTPS for your tailnet (needed once).\n\n'
 DESKTOP_URL=
 if command -v desktop-url >/dev/null 2>&1; then
   DESKTOP_URL=$(desktop-url) || true
 fi
 DESKTOP_URL=${DESKTOP_URL:-"not ready. Run: sudo tailscale up && desktop-url"}
 
-### 13. What to do next -------------------------------------------------------
-# Unquoted heredoc (for $DESKTOP_URL): keep backticks and other $ out of it.
+### 13. GitHub sign-in and git identity ---------------------------------------
+# Same pattern as `tailscale up`: gh prints a one-time code and a link, then
+# waits until the code is entered in a browser (any device). The code lasts 15
+# minutes; if it lapses gh fails and a rerun gets a new one. GH_BROWSER=true
+# stops gh trying to launch a browser on a headless box.
+if ! gh auth status --hostname github.com >/dev/null 2>&1; then
+  printf '\n==> ACTION NEEDED: sign in to GitHub. Open the link below and enter the one-time code.\n\n'
+  GH_BROWSER=true gh auth login --hostname github.com --git-protocol https --web
+fi
+# git push/pull over https already use that login: the checked-out ~/.gitconfig
+# sets gh as the credential helper for github.com.
+
+# Commit identity, from the GitHub account. ~/.gitconfig includes this file;
+# it stays untracked (per machine). Never overwritten — edit it to change.
+# The no-reply address keeps a private email out of commits.
+if [ ! -e "$HOME/.gitconfig.local" ]; then
+  gh api user --jq '"[user]\n\tname = \(.name // .login)\n\temail = \(.email // "\(.id)+\(.login)@users.noreply.github.com")"' \
+    > "$HOME/.gitconfig.local"
+fi
+
+### 14. What to do next -------------------------------------------------------
+# Unquoted heredoc, for $DESKTOP_URL and the GitHub login: keep any other
+# backticks and $ out of it.
 cat <<EOF
 
 ================================================================================
@@ -275,13 +304,12 @@ cat <<EOF
       claude.ai on the tab the Claude extension opened, then log in to the
       accounts you want Claude to use.
 
+  GitHub:          signed in as $(gh api user --jq .login 2>/dev/null || echo "nobody yet: rerun bootstrap")
+
   Next, in order:
 
       1. exec bash -l       reload the shell: brew, asdf and claude on PATH
-      2. gh auth login      GitHub sign-in; also wires up git push and pull
-      3. claude             sign in to Claude Code
-      4. ask Claude to add ~/.gitconfig.local with your git identity
-      5. box-mcp expose     connect Claude (chat and Cowork) to this computer;
+      2. box-mcp expose     connect Claude (chat and Cowork) to this computer;
                             it prints what to do next
 
   How to use this setup (tmux + Claude Code workflow, screenshots, ports):
