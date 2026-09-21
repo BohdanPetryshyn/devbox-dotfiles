@@ -3,8 +3,7 @@
 # Idempotent — safe to re-run.
 #
 # Usage on a fresh machine:
-#   curl -fsSL https://raw.githubusercontent.com/BohdanPetryshyn/devbox-dotfiles/main/bootstrap.sh -o /tmp/bootstrap.sh
-#   bash /tmp/bootstrap.sh
+#   curl -fsSL https://raw.githubusercontent.com/BohdanPetryshyn/devbox-dotfiles/main/bootstrap.sh | bash
 #
 set -euo pipefail
 
@@ -13,6 +12,15 @@ DOTFILES_DIR="$HOME/.dotfiles"
 BACKUP_DIR="$HOME/.dotfiles-backup"
 
 dot() { git --git-dir="$DOTFILES_DIR" --work-tree="$HOME" "$@"; }
+
+# Everything below is the body of main(), called on the last line. bash must
+# read a whole function before running any of it, which is what makes
+# `curl … | bash` safe: piped in, bash reads the script from stdin as it goes,
+# so a command that reads stdin too (brew's gcc install did) swallows the rest
+# of the script and bootstrap stops there without an error. It also protects
+# reruns from step 3 rewriting this very file while bash is still reading it.
+# Not indented, to keep the diff and the heredocs simple.
+main() {
 
 ### 1. Swap -------------------------------------------------------------------
 # Many cloud images ship with no swap. Without it, memory pressure can trip
@@ -278,3 +286,9 @@ EOF
 if [ -n "$DESKTOP_URL" ]; then
   printf '\nYour remote desktop (from any device on your tailnet):\n  %s\n' "$DESKTOP_URL"
 fi
+}
+
+# stdin from /dev/null: the same behaviour piped or run from a file, and
+# nothing in there can sit waiting for input (sudo and `tailscale up` don't
+# use stdin; apt/dpkg fall back to their defaults).
+main "$@" </dev/null
