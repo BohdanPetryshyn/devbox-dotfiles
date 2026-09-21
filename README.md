@@ -57,6 +57,7 @@ working after you close your laptop, and remain usable from your phone.
    exec bash -l       # brew, asdf, claude on PATH; ble.sh active
    gh auth login      # GitHub auth — also wires up git push/pull
    claude             # sign in to Claude Code
+   box-mcp expose     # connect Claude (chat and Cowork) to this computer
    ```
 
    Set your git identity in `~/.gitconfig.local` (or just ask Claude to):

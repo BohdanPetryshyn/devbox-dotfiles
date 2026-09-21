@@ -137,8 +137,8 @@ fi
 # Mesh VPN so this box is reachable from my other devices (Mac, phone) over a
 # stable 100.x.y.z IP — needed for e.g. WebRTC dev where a browser on the Mac
 # must hit a server running here. The official installer sets up its own apt
-# repo + systemd service. Joining the tailnet is a browser-auth step, deferred
-# to the manual follow-ups below.
+# repo + systemd service. Joining the tailnet is a browser-auth step, done last
+# (step 12) so everything unattended finishes first.
 if ! command -v tailscale >/dev/null 2>&1; then
   curl -fsSL https://tailscale.com/install.sh | sh
 fi
@@ -146,8 +146,8 @@ fi
 ### 10. box-mcp (remote bash for Claude chat / Cowork) ------------------------
 # ~/box-mcp is an MCP server exposing one `bash` tool to claude.ai, with its own
 # OAuth server whose login is approved over SSH (see ~/box-mcp/README.md).
-# This only installs it. Nothing runs and nothing is reachable until you opt in
-# with `box-mcp expose` (manual follow-ups below).
+# This only installs it. Nothing runs and nothing is reachable until
+# `box-mcp expose`, which the closing message (step 13) tells you to run.
 npm ci --prefix "$HOME/box-mcp" --omit=dev --no-audit --no-fund
 
 # /usr/local/bin is on the PATH of a bare `ssh box box-mcp approve <CODE>`;
@@ -170,7 +170,7 @@ fi
 #   desktop-session  XFCE. Autostarts Chrome through ~/desktop/bin/chrome.
 #   desktop-web      noVNC + websockify on 127.0.0.1:6080.
 # This installs what they need and starts them. Nothing is reachable until
-# `desktop-url` (manual follow-ups) adds the tailnet-only `tailscale serve`.
+# `desktop-url` (step 12) adds the tailnet-only `tailscale serve`.
 if [ "$(dpkg --print-architecture)" = amd64 ]; then
   # --no-install-recommends keeps XFCE lean (~200 MB RAM idle).
   sudo apt-get install -y --no-install-recommends \
@@ -241,51 +241,53 @@ else
   echo "Skipping the remote desktop: it installs Google Chrome's amd64 .deb." >&2
 fi
 
-### 12. Join the tailnet, print the desktop link -----------------------------
-# The one interactive step done here rather than left to the follow-ups, since
-# the desktop link depends on it. `tailscale up` prints a login URL and waits
-# until it is approved in a browser — no second terminal, and it doesn't read
-# stdin, so it works under `curl | bash`. Only when someone is watching (stdout
-# is a terminal): unattended it would wait forever. Skipped once connected — a
-# bare `tailscale up` on a configured node errors about unmentioned flags.
-ts_running() { tailscale status --json 2>/dev/null | grep -q '"BackendState": "Running"'; }
+### 12. Join the tailnet ------------------------------------------------------
+# Bootstrap is run by a person at a terminal, so do the one interactive step
+# here: `tailscale up` prints a login URL and waits until it is approved in a
+# browser — no second terminal, and it doesn't read stdin, so it works under
+# `curl | bash`. Skipped once connected: a bare `tailscale up` on a configured
+# node errors about unmentioned flags.
+if ! tailscale status --json 2>/dev/null | grep -q '"BackendState": "Running"'; then
+  printf '\n==> Joining your tailnet: open the link below and approve this machine.\n\n'
+  sudo tailscale up || true
+fi
 
+# Adds the tailnet-only `tailscale serve` for the remote desktop and prints its
+# link. Tailscale's own output stays visible: on a tailnet without HTTPS enabled
+# yet, it is one more link to approve. Absent where step 11 was skipped.
 DESKTOP_URL=
-if [ -t 1 ]; then
-  if ! ts_running; then
-    printf '\nJoining your tailnet: open the link below and approve this machine.\n'
-    sudo tailscale up || true
-  fi
-  # May print one more Tailscale link, to enable HTTPS for the tailnet (once).
-  if ts_running && command -v desktop-url >/dev/null 2>&1; then
-    DESKTOP_URL=$(desktop-url) || true
-  fi
+if command -v desktop-url >/dev/null 2>&1; then
+  DESKTOP_URL=$(desktop-url) || true
 fi
+DESKTOP_URL=${DESKTOP_URL:-"not ready. Run: sudo tailscale up && desktop-url"}
 
-### 13. Manual follow-ups ----------------------------------------------------
-cat <<'EOF'
+### 13. What to do next -------------------------------------------------------
+# Unquoted heredoc (for $DESKTOP_URL): keep backticks and other $ out of it.
+cat <<EOF
 
-bootstrap complete. Manual follow-ups, in order:
+================================================================================
+  bootstrap complete
+================================================================================
 
-  1. exec bash -l                      # reload: brew/asdf/claude on PATH, ble.sh
-  2. gh auth login
-  3. claude                            # sign in
-  4. ask claude to add ~/.gitconfig.local with your git identity
-  5. sudo tailscale up                 # only if this machine didn't join the tailnet above
-  6. desktop-url                       # prints the remote desktop's link (tailnet only).
-                                       # Open it. In its Chrome, sign in to claude.ai on the
-                                       # tab the Claude extension opened, log in to your
-                                       # accounts, then ask Claude to "use my browser".
-  7. (optional) give Claude chat/Cowork a shell on this box:
-       box-mcp expose                  # starts it, opens Tailscale Funnel, prints what to do next
+  Remote desktop:  $DESKTOP_URL
 
-Using this setup (tmux + Claude Code workflow, screenshots, ports):
-  ~/README.md  ·  github.com/BohdanPetryshyn/devbox-dotfiles
+      Opens from any device on your tailnet. In its Chrome, sign in to
+      claude.ai on the tab the Claude extension opened, then log in to the
+      accounts you want Claude to use.
+
+  Next, in order:
+
+      1. exec bash -l       reload the shell: brew, asdf and claude on PATH
+      2. gh auth login      GitHub sign-in; also wires up git push and pull
+      3. claude             sign in to Claude Code
+      4. ask Claude to add ~/.gitconfig.local with your git identity
+      5. box-mcp expose     connect Claude (chat and Cowork) to this computer;
+                            it prints what to do next
+
+  How to use this setup (tmux + Claude Code workflow, screenshots, ports):
+      ~/README.md  ·  github.com/BohdanPetryshyn/devbox-dotfiles
+
 EOF
-
-if [ -n "$DESKTOP_URL" ]; then
-  printf '\nYour remote desktop (from any device on your tailnet):\n  %s\n' "$DESKTOP_URL"
-fi
 }
 
 # stdin from /dev/null: the same behaviour piped or run from a file, and
