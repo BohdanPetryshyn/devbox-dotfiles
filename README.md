@@ -158,18 +158,24 @@ device on your tailnet:
 desktop-url        # prints https://<box>.<tailnet>.ts.net:6080/ — or ask Claude for "the desktop link"
 ```
 
-Chrome is already open there. Log in to whatever you want Claude to work
-with, then ask it to *use my browser*: it attaches to that same Chrome (over
-CDP on localhost, via `playwright-cli`) and you watch it click around live.
-Grab the mouse any time — for a captcha or a 2FA prompt, say — and Claude
-carries on afterwards. The desktop stays up when you close the tab.
+Chrome is already open there, with the
+[Claude in Chrome](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn)
+extension pre-installed. Once: sign in to claude.ai on the tab the extension
+opened (it needs a paid Claude plan), and log in to whatever you want Claude
+to work with. Then ask Claude to *use my browser*: it drives that same Chrome
+through the extension, in its own tab group, and you watch it click around
+live. It is an ordinary Chrome — no automation flags, no debug port — so
+sites treat it like any other browser. When Claude hits a login, a captcha or
+a 2FA prompt it stops and asks you to do it on the desktop. The desktop stays
+up when you close the tab.
 
 - **Pasting**: inside the desktop it's `Ctrl+V`, not `Cmd+V`. To bring text
   over from your Mac, open the clipboard panel in the toolbar on the left
   edge, paste there, then `Ctrl+V` in the desktop.
 - **Who can reach it**: devices on your tailnet, nothing else — there is no
   password beyond that. Claude acts as you in every account that Chrome is
-  logged in to, so log in only to what you want it to use.
+  logged in to, so log in only to what you want it to use; the extension's
+  settings control which sites it may touch.
 - The first `desktop-url` may print a Tailscale link to enable HTTPS for your
   tailnet — a one-time click.
 

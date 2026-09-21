@@ -154,9 +154,10 @@ fi
 
 ### 11. Remote desktop (a desktop in a browser tab + a Chrome Claude can drive)
 # A persistent XFCE desktop on display :1, viewable from any device on the
-# tailnet. Its Chrome exposes CDP on localhost, so Claude can drive the browser
-# you are logged in to while you watch (see "Remote desktop & browser" in
-# ~/.claude/CLAUDE.md). Three user units, checked out with the dotfiles:
+# tailnet. Its Chrome is an ordinary one with the Claude in Chrome extension
+# pre-installed, so Claude can drive the browser you are logged in to while you
+# watch (see "Remote desktop & browser" in ~/.claude/CLAUDE.md) and websites
+# see a normal browser. Three user units, checked out with the dotfiles:
 #   desktop-x        Xvnc, the screen. VNC on a unix socket: no TCP, no password.
 #   desktop-session  XFCE. Autostarts Chrome through ~/desktop/bin/chrome.
 #   desktop-web      noVNC + websockify on 127.0.0.1:6080.
@@ -171,9 +172,9 @@ if [ "$(dpkg --print-architecture)" = amd64 ]; then
     dbus-x11 xdg-utils x11-xserver-utils xauth \
     adwaita-icon-theme librsvg2-common fonts-dejavu fonts-noto-color-emoji
 
-  # Google Chrome, not a Playwright-bundled Chromium: sites accept logins in
-  # it, and its .deb ships the AppArmor profile the sandbox needs on Ubuntu.
-  # The .deb also registers Google's apt repo.
+  # Google Chrome rather than Chromium: the Claude extension comes from the
+  # Chrome Web Store, and the .deb ships the AppArmor profile the sandbox needs
+  # on Ubuntu. The .deb also registers Google's apt repo.
   if ! command -v google-chrome-stable >/dev/null 2>&1; then
     tmpdir=$(mktemp -d)
     chmod 755 "$tmpdir"   # apt reads the .deb as its sandbox user
@@ -210,12 +211,14 @@ EOF
     rm -rf "$tmpdir"
   fi
 
-  # playwright-cli: how Claude drives that Chrome (attaches over CDP, so it
-  # needs no browser download of its own).
-  if ! command -v playwright-cli >/dev/null 2>&1; then
-    npm install -g @playwright/cli
-    asdf reshim nodejs
-  fi
+  # Pre-install the Claude in Chrome extension (how Claude drives that Chrome)
+  # through Chrome's "external extensions" mechanism: on its next start Chrome
+  # fetches it from the Web Store and opens its claude.ai sign-in tab. Not an
+  # enterprise policy, which would label the browser "managed by your
+  # organization". The file name is the extension's Web Store id.
+  sudo install -d -m 755 /usr/share/google-chrome/extensions
+  echo '{ "external_update_url": "https://clients2.google.com/service/update2/crx" }' \
+    | sudo tee /usr/share/google-chrome/extensions/fcoeoabgfenejglbffodgkkbkcdhcgfn.json >/dev/null
 
   # On PATH for Claude and for a bare `ssh box desktop-url` (see box-mcp above).
   sudo ln -sf "$HOME/desktop/bin/desktop-url" /usr/local/bin/desktop-url
@@ -241,8 +244,9 @@ bootstrap complete. Manual follow-ups, in order:
   4. ask claude to add ~/.gitconfig.local with your git identity
   5. sudo tailscale up                 # browser-auth into the tailnet
   6. desktop-url                       # prints the remote desktop's link (tailnet only).
-                                       # Open it, log in to your accounts in its Chrome,
-                                       # then ask Claude to "use my browser".
+                                       # Open it. In its Chrome, sign in to claude.ai on the
+                                       # tab the Claude extension opened, log in to your
+                                       # accounts, then ask Claude to "use my browser".
   7. (optional) give Claude chat/Cowork a shell on this box:
        box-mcp expose                  # starts it, opens Tailscale Funnel, prints what to do next
 

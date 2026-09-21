@@ -37,12 +37,9 @@
 
 # Remote desktop. The Chrome profile holds logged-in sessions (cookies there
 # are protected by file permissions only — see desktop/bin/chrome); .Xauthority
-# is the display's access cookie; .playwright-cli/ is page snapshots Claude
-# took while driving the browser from ~.
-/.config/chrome-desktop/
+# is the display's access cookie.
 /.config/google-chrome/
 /.Xauthority
-/.playwright-cli/
 
 # Per-machine secrets & env (API tokens, etc.) — sourced by .bashrc
 /.bashrc.local

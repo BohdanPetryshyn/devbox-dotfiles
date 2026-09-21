@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
-# The desktop's Chrome: one persistent profile, with CDP on localhost so Claude
-# can attach to it (`playwright-cli attach --cdp=http://127.0.0.1:9222`).
-# XFCE autostart, the dock/menu icon and Claude all start Chrome through this,
-# so however it starts it is the same logged-in browser. If it is already
-# running, this just opens a window (or the given URL) in it.
+# The desktop's Chrome: an ordinary Chrome on its default profile, with no
+# automation flags — Claude drives it through the Claude in Chrome extension,
+# so websites see a normal browser. XFCE autostart, the dock/menu icon and
+# Claude all start Chrome through this. If it is already running, this just
+# opens a window (or the given URL) in it.
 set -euo pipefail
 
 export DISPLAY="${DISPLAY:-:1}"
 
-# CDP has no auth — Chrome binds it to 127.0.0.1 by default; keep it that way.
 # --password-store=basic: no keyring prompts; cookies rely on file permissions.
+# Every launch has to agree on it or Chrome can't decrypt its own cookies and
+# logs you out everywhere — the reason the dock and menu go through this script.
 # setsid -f: outlive the shell that launched us (e.g. Claude's Bash tool).
 exec setsid -f google-chrome-stable \
-  --user-data-dir="$HOME/.config/chrome-desktop" \
-  --remote-debugging-port=9222 \
   --password-store=basic \
   --no-first-run --no-default-browser-check --start-maximized \
   "$@" >/dev/null 2>&1
