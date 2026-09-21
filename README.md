@@ -44,6 +44,10 @@ working after you close your laptop, and remain usable from your phone.
    curl -fsSL https://raw.githubusercontent.com/BohdanPetryshyn/devbox-dotfiles/main/bootstrap.sh | bash
    ```
 
+   Near the end it prints a Tailscale login link: open it and approve the
+   machine (that joins your tailnet — no second terminal needed). Bootstrap
+   then finishes by printing the link to the box's remote desktop.
+
    Idempotent — rerun any time to pull in dotfile updates from this repo or
    from another machine you push from.
 
@@ -53,8 +57,6 @@ working after you close your laptop, and remain usable from your phone.
    exec bash -l       # brew, asdf, claude on PATH; ble.sh active
    gh auth login      # GitHub auth — also wires up git push/pull
    claude             # sign in to Claude Code
-   sudo tailscale up  # join your tailnet (browser auth)
-   desktop-url        # link to the box's remote desktop (see below)
    ```
 
    Set your git identity in `~/.gitconfig.local` (or just ask Claude to):

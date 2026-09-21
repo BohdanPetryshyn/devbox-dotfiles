@@ -233,7 +233,28 @@ else
   echo "Skipping the remote desktop: it installs Google Chrome's amd64 .deb." >&2
 fi
 
-### 12. Manual follow-ups ----------------------------------------------------
+### 12. Join the tailnet, print the desktop link -----------------------------
+# The one interactive step done here rather than left to the follow-ups, since
+# the desktop link depends on it. `tailscale up` prints a login URL and waits
+# until it is approved in a browser — no second terminal, and it doesn't read
+# stdin, so it works under `curl | bash`. Only when someone is watching (stdout
+# is a terminal): unattended it would wait forever. Skipped once connected — a
+# bare `tailscale up` on a configured node errors about unmentioned flags.
+ts_running() { tailscale status --json 2>/dev/null | grep -q '"BackendState": "Running"'; }
+
+DESKTOP_URL=
+if [ -t 1 ]; then
+  if ! ts_running; then
+    printf '\nJoining your tailnet: open the link below and approve this machine.\n'
+    sudo tailscale up || true
+  fi
+  # May print one more Tailscale link, to enable HTTPS for the tailnet (once).
+  if ts_running && command -v desktop-url >/dev/null 2>&1; then
+    DESKTOP_URL=$(desktop-url) || true
+  fi
+fi
+
+### 13. Manual follow-ups ----------------------------------------------------
 cat <<'EOF'
 
 bootstrap complete. Manual follow-ups, in order:
@@ -242,7 +263,7 @@ bootstrap complete. Manual follow-ups, in order:
   2. gh auth login
   3. claude                            # sign in
   4. ask claude to add ~/.gitconfig.local with your git identity
-  5. sudo tailscale up                 # browser-auth into the tailnet
+  5. sudo tailscale up                 # only if this machine didn't join the tailnet above
   6. desktop-url                       # prints the remote desktop's link (tailnet only).
                                        # Open it. In its Chrome, sign in to claude.ai on the
                                        # tab the Claude extension opened, log in to your
@@ -253,3 +274,7 @@ bootstrap complete. Manual follow-ups, in order:
 Using this setup (tmux + Claude Code workflow, screenshots, ports):
   ~/README.md  ·  github.com/BohdanPetryshyn/devbox-dotfiles
 EOF
+
+if [ -n "$DESKTOP_URL" ]; then
+  printf '\nYour remote desktop (from any device on your tailnet):\n  %s\n' "$DESKTOP_URL"
+fi
