@@ -5,6 +5,9 @@
 # Usage on a fresh machine:
 #   curl -fsSL https://raw.githubusercontent.com/BohdanPetryshyn/devbox-dotfiles/main/bootstrap.sh | bash
 #
+# Optional: `… | BOX_TIMEZONE=Area/City bash` also sets the box's time zone
+# (see step 11).
+#
 set -Eeuo pipefail   # -E: the ERR trap in main() also fires inside functions
 
 DOTFILES_REPO="https://github.com/BohdanPetryshyn/devbox-dotfiles.git"
@@ -177,14 +180,30 @@ fi
 #   desktop-web      noVNC + websockify on 127.0.0.1:6080.
 # This installs what they need and starts them. Nothing is reachable until
 # `desktop-url` (step 12) adds the tailnet-only `tailscale serve`.
+
+# Time zone. Chrome reports it to every website, which compares it with where
+# the IP is; the cloud image's UTC is a telltale of a server, not someone's
+# computer. BOX_TIMEZONE is the person's own zone (an IANA name such as
+# Asia/Makassar), which SETUP.md passes in. Unset, the box keeps the zone it
+# has, so reruns don't need it.
+if [ -n "${BOX_TIMEZONE:-}" ]; then
+  sudo timedatectl set-timezone "$BOX_TIMEZONE"
+fi
+
 if [ "$(dpkg --print-architecture)" = amd64 ]; then
-  # --no-install-recommends keeps XFCE lean (~200 MB RAM idle).
+  # --no-install-recommends keeps XFCE lean (~200 MB RAM idle). The fonts are
+  # the set ubuntu-desktop ships: with fewer, Chinese or Japanese text shows as
+  # boxes, and websites that list the browser's fonts see a server's. PipeWire
+  # is for the virtual speaker below.
   sudo apt-get install -y --no-install-recommends \
     tigervnc-standalone-server websockify \
     xfce4-session xfwm4 xfce4-panel xfdesktop4 xfce4-settings \
     xfce4-terminal xfce4-appfinder thunar exo-utils \
     dbus-x11 xdg-utils x11-xserver-utils xauth \
-    adwaita-icon-theme librsvg2-common fonts-dejavu fonts-noto-color-emoji
+    adwaita-icon-theme librsvg2-common \
+    fonts-dejavu fonts-liberation fonts-noto-core fonts-noto-cjk \
+    fonts-noto-color-emoji fonts-ubuntu \
+    pipewire pipewire-pulse wireplumber
 
   # Google Chrome rather than Chromium: the Claude extension comes from the
   # Chrome Web Store, and the .deb ships the AppArmor profile the sandbox needs
@@ -240,6 +259,12 @@ EOF
   # User units only run at boot / without a login session if lingering is on.
   sudo loginctl enable-linger "$USER"
   systemctl --user daemon-reload
+  # Sound, before the desktop so Chrome finds it when it starts (it picks its
+  # audio backend once, at launch). The checked-out
+  # ~/.config/pipewire/pipewire.conf.d/desktop-speaker.conf adds one virtual
+  # speaker, so the browser reports an audio device like any computer's.
+  # After editing that file: systemctl --user restart pipewire
+  systemctl --user enable --now pipewire.socket pipewire-pulse.socket wireplumber.service
   # Deliberately not restarted on reruns: restarting desktop-x closes everything
   # open on the desktop. After editing a unit: systemctl --user restart desktop-x
   systemctl --user enable --now desktop-x desktop-session desktop-web

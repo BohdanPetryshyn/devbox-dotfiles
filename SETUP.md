@@ -77,10 +77,12 @@ and the pieces that connect Claude. About 15 minutes. Twice I'll hand you a
 link to approve — Tailscale, then GitHub. Nothing else needed from you."
 
 It has to outlive dropped connections, so start it in the background on the
-box with its output going straight to a log file:
+box with its output going straight to a log file. Replace `Area/City` with this
+computer's time zone, so the box's Chrome reports the person's own: on macOS
+and Linux it is the end of `readlink /etc/localtime`, after `zoneinfo/`.
 
 ```sh
-ssh agent@IP 'sudo loginctl enable-linger "$USER"; nohup bash -c "curl -fsSL https://raw.githubusercontent.com/BohdanPetryshyn/devbox-dotfiles/main/bootstrap.sh | bash" > ~/bootstrap.log 2>&1 < /dev/null &'
+ssh agent@IP 'sudo loginctl enable-linger "$USER"; nohup bash -c "curl -fsSL https://raw.githubusercontent.com/BohdanPetryshyn/devbox-dotfiles/main/bootstrap.sh | BOX_TIMEZONE=Area/City bash" > ~/bootstrap.log 2>&1 < /dev/null &'
 ```
 
 Then poll about once a minute, and read the end of the log:
