@@ -8,10 +8,15 @@ ExecStartPre=/bin/sh -c 'xauth -f %h/.Xauthority add :1 . "$(mcookie)"'
 # VNC listens on a unix socket only (-rfbport -1 = no TCP), mode 0600, so no
 # password is needed: reaching it already requires being this user.
 # desktop-web.service bridges the socket to the browser.
+# A fixed, common screen size (a 1080p laptop at 125%), so the browser reports
+# one websites see every day: sized to the viewer's window it came out at odd
+# sizes like 1512x798, which fingerprinting flags as a rare device. The viewer
+# scales it to fit instead (resize=scale in ~/desktop/web/index.html), and
+# viewers can't resize it (AcceptSetDesktopSize is on by default).
 ExecStart=/usr/bin/Xvnc :1 -auth %h/.Xauthority -nolisten tcp \
-  -geometry 1600x900 -depth 24 \
+  -geometry 1536x864 -depth 24 \
   -rfbport -1 -rfbunixpath %t/desktop-vnc.sock -rfbunixmode 0600 \
-  -SecurityTypes None -AlwaysShared -AcceptSetDesktopSize
+  -SecurityTypes None -AlwaysShared -AcceptSetDesktopSize=0
 Restart=always
 RestartSec=2
 
