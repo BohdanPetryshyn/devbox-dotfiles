@@ -10,6 +10,17 @@ Bare git repo at `~/.dotfiles` versioning config files in place (worktree is `$H
 
 Secrets are deliberately untracked.
 
+## Scheduled jobs
+
+Recurring jobs on this machine are systemd user timers kept in `~/workspace/jobs/`. Use them rather than `/loop`, CronCreate or `/schedule` unless I name one of those.
+
+Each job is a directory `~/workspace/jobs/<name>/` holding:
+- `run`: the executable that does the work.
+- `job-<name>.service`: `Type=oneshot`, `ExecStart=%h/workspace/jobs/<name>/run`, a `TimeoutStartSec=` (oneshot has none, so a hung run blocks the next ones), and my tools on PATH: `Environment=PATH=%h/.local/bin:%h/.asdf/shims:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin`.
+- `job-<name>.timer`: `OnCalendar=` with an explicit time zone, `Persistent=true`, `WantedBy=timers.target`.
+
+After adding or removing a job or editing its unit files, run `~/workspace/jobs/install` (idempotent: links units into `~/.config/systemd/user`, enables timers, cleans up removed jobs). Test a new job with `systemctl --user start job-<name>` before relying on the timer.
+
 ## Tailscale links
 
 When sharing a URL for something served on this machine over Tailscale, give both the MagicDNS hostname and the Tailscale IP. Get them from `tailscale status --self --peers=false` (columns 2 and 1).
