@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Link every job's units into systemd and enable its timer. Idempotent: rerun
+# after adding or removing a job, or editing its unit files.
+set -euo pipefail
+shopt -s nullglob
+
+jobs=$(cd "$(dirname "$0")" && pwd)
+units=$HOME/.config/systemd/user
+mkdir -p "$units"
+
+# Jobs removed since the last run: stop them and drop their dangling links.
+for link in "$units"/job-* "$units"/timers.target.wants/job-*; do
+  [ -L "$link" ] && [ ! -e "$link" ] || continue
+  systemctl --user stop "$(basename "$link")" 2>/dev/null || true
+  rm "$link"
+done
+
+for f in "$jobs"/*/job-*.service "$jobs"/*/job-*.timer; do
+  ln -sfn "$f" "$units/"
+done
+systemctl --user daemon-reload
+
+for t in "$jobs"/*/job-*.timer; do
+  systemctl --user enable --now "$(basename "$t")"
+done

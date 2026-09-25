@@ -11,8 +11,12 @@
 /.bash_logout
 /.profile
 
-# Project workspaces (their own git repos)
-/workspace/
+# Project workspaces (their own git repos). Only the jobs installer is tracked;
+# the jobs themselves stay untracked.
+/workspace/*
+!/workspace/jobs/
+/workspace/jobs/*
+!/workspace/jobs/install
 
 # Caches and tool installs (rebuilt by bootstrap.sh)
 /.cache/
