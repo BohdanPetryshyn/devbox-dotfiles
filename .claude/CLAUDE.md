@@ -12,7 +12,7 @@ Secrets are deliberately untracked.
 
 ## Scheduled jobs
 
-Recurring jobs on this machine are systemd user timers kept in `~/workspace/jobs/`. Use them rather than `/loop`, CronCreate or `/schedule` unless I name one of those.
+Recurring jobs on this machine are systemd user timers kept in `~/workspace/jobs/`. Use them rather than `/loop`, CronCreate or `/schedule` unless I name one of those. A job that is part of an application belongs in that application's own infrastructure, not here.
 
 Each job is a directory `~/workspace/jobs/<name>/` holding:
 - `run`: the executable that does the work.
